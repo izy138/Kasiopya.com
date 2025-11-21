@@ -1,0 +1,223 @@
+
+
+  /* ============================================
+     VIDEO CONTAINER - RESPONSIVE BREAKPOINTS
+     ============================================ */
+  /* Center the Video Container - Fixed Version */
+  @media screen and (min-width: 990px) {
+    
+    /* Keep the main blog section (with "Tutorials" title) normal */
+    .main-blog {
+      display: block !important;
+      width: 100% !important;
+      margin: 0 auto !important;
+      
+      margin-bottom: -32px !important;
+      max-width: 1200px !important;
+    }
+    
+    /* Center the entire MainContent container - ONLY on blog pages */
+    body:has(.main-blog) #MainContent {
+      display: block !important;
+      text-align: center !important; /* This centers the inline-block videos */
+      max-width: 1200px !important;
+      margin: 0 auto !important;
+    }
+    
+    /* Create a container specifically for video sections */
+    .shopify-section:has(.video-section) {
+      display: inline-block !important;
+      width: calc(32%) !important;
+      margin: 8px !important;
+      vertical-align: top !important;
+      box-sizing: border-box !important;
+      text-align: left !important; /* Reset text alignment for content inside videos */
+    }
+    
+    /* Remove the conflicting margin settings */
+    .shopify-section:has(.video-section):nth-of-type(odd) {
+      margin-right: 8px !important;
+    }
+    
+    .shopify-section:has(.video-section):nth-of-type(even) {
+      margin-left: 8px !important;
+    }
+    
+    /* Style each video to fit its container */
+    .shopify-section .video-section {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 !important;
+    }
+    
+    /* Adjust video containers for smaller size */
+    .shopify-section .video-section__media.deferred-media {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 auto !important;
+      --ratio-percent: 200% !important;
+    }
+    
+    .shopify-section .video-section__media {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 auto !important;
+    }
+    
+    .shopify-section .video-section .page-width {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+    }
+    
+    /* Reduce padding on video section containers */
+    [class*="section-template"][class*="video"][class*="padding"] {
+      padding-top: 15px !important;
+      padding-bottom: 15px !important;
+    }
+  }
+  
+  /* DIAGNOSTIC - Remove after testing
+  /* @media screen and (min-width: 750px) {
+    body:has(.product__media-wrapper) .product__media-list {
+      border: 3px solid red !important;
+    }
+    
+    body:has(.product__media-wrapper) .product__media-item {
+      border: 3px solid blue !important;
+    }
+  } */
+  /* ============================================
+     PRODUCT CAROUSEL - RESPONSIVE BREAKPOINTS
+     ============================================ */
+  
+  /* Large desktop (original) */
+  @media screen and (min-width: 1200px) {
+    .product--carousel.product--columns {
+      display: grid !important;
+      grid-template-columns: 500px 1fr !important;
+      gap: 3rem !important;
+      align-items: start !important;
+      margin-left: 100px !important;
+    }
+    
+    .product--carousel .product__media-wrapper,
+    .product--carousel media-gallery {
+      max-width: 500px !important;
+    }
+    
+    .product--carousel media-gallery slider-component {
+      padding: 40px 50px !important;
+    }
+    
+    .product--carousel .product__media-item {
+      flex: 0 0 400px !important;
+      width: 400px !important;
+      min-width: 400px !important;
+    }
+    
+    .product--carousel #MainProduct-template--25539644817699__main {
+      padding-left: 150px !important;
+    }
+    
+    .product--carousel #MainProduct-template--25539644817699__main .page-width {
+      padding-left: 150px !important;
+      max-width: calc(1200px + 150px) !important;
+    }
+  }
+  
+  /* Desktop carousel styles - ONLY APPLY ABOVE 750px */
+  @media screen and (min-width: 750px) {
+    .product--carousel .product__media-wrapper {
+      overflow: hidden !important;
+    }
+    
+    .product--carousel media-gallery {
+      display: block !important;
+      width: 100% !important;
+      position: relative !important;
+    }
+    
+    .product--carousel media-gallery .product__media-list {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      gap: 20px !important;
+      position: relative !important;
+      left: 0 !important;
+      transition: transform 0.5s ease !important;
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    .product--carousel media-gallery .product__media-item {
+      opacity: 1 !important;
+      transition: opacity 0.3s ease !important;
+    }
+    
+    .product--carousel media-gallery .product__media-item:not(.carousel-active) {
+      opacity: 0.4 !important;
+    }
+    
+    .product--carousel media-gallery .product__media-item.carousel-active {
+      opacity: 1 !important;
+    }
+    
+    .product--carousel media-gallery .slider-buttons {
+      display: flex !important;
+      position: absolute !important;
+      top: 50% !important;
+      left: 0 !important;
+      right: 0 !important;
+      transform: translateY(-50%) !important;
+      justify-content: space-between !important;
+      padding: 0 5px !important;
+      pointer-events: none !important;
+      z-index: 100 !important;
+    }
+    
+    .product--carousel media-gallery .slider-button {
+      pointer-events: all !important;
+      display: flex !important;
+      width: 44px !important;
+      height: 44px !important;
+      background: rgba(255, 255, 255, 0.95) !important;
+      border: 1px solid rgba(0, 0, 0, 0.1) !important;
+      border-radius: 50% !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    .product--carousel media-gallery .slider-button:hover {
+      background: white !important;
+      transform: scale(1.1) !important;
+    }
+    
+    .product--carousel media-gallery .slider-button[disabled] {
+      opacity: 0.3 !important;
+      cursor: not-allowed !important;
+    }
+    
+    .product--carousel media-gallery .slider-button svg {
+      width: 18px !important;
+      height: 18px !important;
+    }
+    
+    .product--carousel media-gallery .slider-counter {
+      position: absolute !important;
+      bottom: -280px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      background: rgba(255, 255, 255, 0.9) !important;
+      padding: 6px 12px !important;
+      border-radius: 15px !important;
+      font-size: 14px !important;
+      z-index: 100 !important;
+    }
+  }
