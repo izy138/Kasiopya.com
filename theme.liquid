@@ -366,134 +366,328 @@
   let isCarouselActive = false;
   let carouselButtons = [];
   let currentIndex = 0;
+  let track = null;
+  let gallery = null;
+  let isVariantImagesActive = false;
+  let isTransitioning = false;
   
   function getCarouselSettings() {
     const width = window.innerWidth;
     if (width >= 1200) {
-      return { slideWidth: 450, gap: 10 };
+      return { slideWidth: 450, gap: 10, padding: 75 };
     } else if (width >= 990) {
-      return { slideWidth: 400, gap: 10 };
+      return { slideWidth: 400, gap: 10, padding: 50 };
     } else if (width >= 750) {
-      return { slideWidth: 320, gap: 10 };
+      return { slideWidth: 320, gap: 10, padding: 30 };
     }
     return null;
   }
   
+  function getVisibleSlides() {
+    if (!gallery) return [];
+    return Array.from(gallery.querySelectorAll('.product__media-item:not(.hidden)'));
+  }
+  
+  function getAllSlides() {
+    if (!gallery) return [];
+    return Array.from(gallery.querySelectorAll('.product__media-item'));
+  }
+  
+  function repositionVisibleSlides() {
+    // This function physically repositions visible slides to be consecutive
+    // so the carousel doesn't have to animate through hidden slides
+    // EXIT IMMEDIATELY if mobile
+    if (window.innerWidth < 750) {
+      console.log('Mobile view - skipping carousel repositioning');
+      return;
+    }
+    const allSlides = getAllSlides();
+    const visibleSlides = getVisibleSlides();
+    const settings = getCarouselSettings();
+    
+    if (!settings) return;
+    
+    const { slideWidth, gap, padding } = settings;
+    
+    console.log('Repositioning', visibleSlides.length, 'visible slides');
+    
+    // Position each visible slide consecutively
+    visibleSlides.forEach((slide, index) => {
+      const position = index * (slideWidth + gap);
+      slide.style.position = 'absolute';
+      slide.style.left = position + 'px';
+      slide.style.width = slideWidth + 'px';
+      
+      console.log('Slide', index, 'positioned at', position + 'px');
+    });
+    
+    // Hide all hidden slides and remove them from layout
+    allSlides.forEach(slide => {
+      if (slide.classList.contains('hidden')) {
+        slide.style.position = 'absolute';
+        slide.style.left = '-9999px'; // Move far off screen
+        slide.style.opacity = '0';
+        slide.style.visibility = 'hidden';
+        slide.style.pointerEvents = 'none';
+      }
+    });
+    
+    // Set track height based on tallest visible slide
+    const maxHeight = Math.max(...visibleSlides.map(slide => slide.offsetHeight));
+    track.style.height = maxHeight + 'px';
+    track.style.position = 'relative';
+  }
+  
+  function updateCarousel() {
+
+      // EXIT IMMEDIATELY if mobile
+    if (window.innerWidth < 750) {
+      console.log('Mobile view - skipping carousel update');
+      return;
+    }
+  
+
+    if (!track || !gallery) {
+      console.warn('Track or gallery not found');
+      return;
+    }
+    
+    const visibleSlides = getVisibleSlides();
+    
+    console.log('=== UPDATE CAROUSEL ===');
+    console.log('Visible slides:', visibleSlides.length);
+    console.log('Current index:', currentIndex);
+    
+    if (visibleSlides.length === 0) {
+      console.warn('No visible slides found');
+      return;
+    }
+    
+    // Make sure currentIndex is within bounds
+    if (currentIndex >= visibleSlides.length) {
+      currentIndex = 0;
+      console.log('Index out of bounds, reset to 0');
+    }
+    
+    const settings = getCarouselSettings();
+    if (!settings) return;
+    
+    const { slideWidth, gap } = settings;
+    
+    // Calculate offset based on VISIBLE slide index only
+    const offset = currentIndex * (slideWidth + gap);
+    
+    console.log('Setting transform offset:', offset);
+    
+    // Smooth transition for carousel movement
+    track.style.transition = isTransitioning ? 'none' : 'transform 0.5s ease';
+    track.style.transform = `translateX(-${offset}px)`;
+    
+    // Update all slides' opacity and active state
+    visibleSlides.forEach((slide, index) => {
+      if (index === currentIndex) {
+        slide.classList.add('carousel-active');
+        slide.style.opacity = '1';
+        slide.style.visibility = 'visible';
+        slide.style.pointerEvents = 'auto';
+      } else {
+        slide.classList.remove('carousel-active');
+        slide.style.opacity = '0.4';
+        slide.style.visibility = 'visible';
+        slide.style.pointerEvents = 'auto';
+      }
+    });
+    
+    // Update button states
+    const prevBtn = gallery.querySelector('.slider-button--prev');
+    const nextBtn = gallery.querySelector('.slider-button--next');
+    
+    if (prevBtn) {
+      prevBtn.disabled = currentIndex === 0;
+    }
+    if (nextBtn) {
+      nextBtn.disabled = currentIndex === visibleSlides.length - 1;
+    }
+    
+    // Update counter
+    const counterCurrent = gallery.querySelector('.slider-counter--current');
+    const counterTotal = gallery.querySelector('.slider-counter--total');
+    if (counterCurrent) counterCurrent.textContent = currentIndex + 1;
+    if (counterTotal) counterTotal.textContent = visibleSlides.length;
+    
+    console.log('Counter: ' + (currentIndex + 1) + '/' + visibleSlides.length);
+    console.log('======================\n');
+  }
+  
+  function setupButtons() {
+    if (!gallery) return;
+    
+    const prevBtn = gallery.querySelector('.slider-button--prev');
+    const nextBtn = gallery.querySelector('.slider-button--next');
+    
+    if (!prevBtn || !nextBtn) {
+      setTimeout(setupButtons, 100);
+      return;
+    }
+    
+    if (window.innerWidth >= 750) {
+      // Remove old event listeners by cloning
+      const newPrevBtn = prevBtn.cloneNode(true);
+      const newNextBtn = nextBtn.cloneNode(true);
+      prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+      nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+      
+      carouselButtons = [newPrevBtn, newNextBtn];
+      
+      newPrevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('PREV BUTTON CLICKED');
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateCarousel();
+        }
+      }, { capture: true });
+      
+      newNextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('NEXT BUTTON CLICKED');
+        const visibleSlides = getVisibleSlides();
+        if (currentIndex < visibleSlides.length - 1) {
+          currentIndex++;
+          updateCarousel();
+        }
+      }, { capture: true });
+      
+      console.log('Buttons set up successfully');
+    }
+  }
+  
+  function refreshCarousel() {
+
+      // EXIT IMMEDIATELY if mobile
+    if (window.innerWidth < 750) {
+      console.log('Mobile view - skipping carousel refresh');
+      return;
+    }
+  
+    if (!isCarouselActive) return;
+    
+    console.log('\n🔄 REFRESH CAROUSEL TRIGGERED');
+    
+    // Disable transition during repositioning
+    isTransitioning = true;
+    
+    // Reset to first slide
+    currentIndex = 0;
+    
+    // Reposition visible slides to be consecutive
+    repositionVisibleSlides();
+    
+    // Small delay to ensure DOM is updated
+    setTimeout(function() {
+      isTransitioning = false;
+      updateCarousel();
+      // Re-setup buttons to ensure they work
+      setupButtons();
+    }, 50);
+  }
+  
   function initProductCarousel() {
+    console.log('🚀 INITIALIZING PRODUCT CAROUSEL');
+    
     // Exit if mobile (below 750px)
     if (window.innerWidth < 750) {
+      console.log('Mobile detected - carousel disabled');
       return;
     }
     
     const product = document.querySelector('.product--carousel');
     if (!product) {
+      console.log('No .product--carousel found');
       return;
     }
     
-    const gallery = product.querySelector('media-gallery');
+    gallery = product.querySelector('media-gallery');
     if (!gallery) {
+      console.log('No media-gallery found');
       return;
     }
     
-    const track = gallery.querySelector('.product__media-list');
-    const slides = Array.from(gallery.querySelectorAll('.product__media-item'));
+    track = gallery.querySelector('.product__media-list');
+    const allSlides = getAllSlides();
     
-    if (!track || slides.length === 0) {
+    if (!track || allSlides.length === 0) {
+      console.log('No track or slides found');
       return;
     }
+    
+    // Check if variant images functionality is active
+    isVariantImagesActive = allSlides.some(slide => slide.hasAttribute('data-media-group'));
+    console.log('Variant images active:', isVariantImagesActive);
+    console.log('Total slides found:', allSlides.length);
     
     isCarouselActive = true;
     currentIndex = 0;
     
     const settings = getCarouselSettings();
-    if (!settings) return;
+    if (!settings) {
+      console.log('No carousel settings for this screen size');
+      return;
+    }
     
-    function updateCarousel() {
-      const { slideWidth, gap } = getCarouselSettings();
-      const offset = -(currentIndex * (slideWidth + gap));
-      
-      track.style.transform = `translateX(${offset}px)`;
-      
-      slides.forEach((slide, index) => {
-        if (index === currentIndex) {
-          slide.classList.add('carousel-active');
-          slide.style.opacity = '1';
-        } else {
-          slide.classList.remove('carousel-active');
-          slide.style.opacity = '0.4';
-        }
+    // Initial setup
+    setTimeout(function() {
+      console.log('Running initial carousel setup');
+      repositionVisibleSlides();
+      updateCarousel();
+      setupButtons();
+    }, 200);
+    
+    // Listen for custom event from variant images script
+    document.addEventListener('variantImagesUpdated', function(e) {
+      console.log('🎨 Variant Images Updated Event Received:', e.detail);
+      refreshCarousel();
+    });
+    
+    // Also listen for regular change events as backup
+    const productSection = document.querySelector('.product-variant-id, variant-selects');
+    if (productSection) {
+      productSection.addEventListener('change', function(e) {
+        console.log('⚙️ Variant change detected (backup listener)');
+        setTimeout(function() {
+          if (getVisibleSlides().length > 0) {
+            refreshCarousel();
+          }
+        }, 300);
       });
-      
-      const prevBtn = gallery.querySelector('.slider-button--prev');
-      const nextBtn = gallery.querySelector('.slider-button--next');
-      
-      if (prevBtn) prevBtn.disabled = currentIndex === 0;
-      if (nextBtn) nextBtn.disabled = currentIndex === slides.length - 1;
-      
-      const counterCurrent = gallery.querySelector('.slider-counter--current');
-      const counterTotal = gallery.querySelector('.slider-counter--total');
-      if (counterCurrent) counterCurrent.textContent = currentIndex + 1;
-      if (counterTotal) counterTotal.textContent = slides.length;
     }
-    
-    function setupButtons() {
-      const prevBtn = gallery.querySelector('.slider-button--prev');
-      const nextBtn = gallery.querySelector('.slider-button--next');
-      
-      if (!prevBtn || !nextBtn) {
-        setTimeout(setupButtons, 100);
-        return;
-      }
-      
-      if (window.innerWidth >= 750) {
-        const newPrevBtn = prevBtn.cloneNode(true);
-        const newNextBtn = nextBtn.cloneNode(true);
-        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-        
-        carouselButtons = [newPrevBtn, newNextBtn];
-        
-        newPrevBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (currentIndex > 0) {
-            currentIndex--;
-            updateCarousel();
-          }
-        }, { capture: true });
-        
-        newNextBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (currentIndex < slides.length - 1) {
-            currentIndex++;
-            updateCarousel();
-          }
-        }, { capture: true });
-      }
-    }
-    
-    updateCarousel();
-    setupButtons();
     
     // Update carousel on resize within desktop range
     let resizeTimer;
     window.addEventListener('resize', function() {
       if (window.innerWidth >= 750 && isCarouselActive) {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(updateCarousel, 100);
+        resizeTimer = setTimeout(function() {
+          console.log('📏 Window resized, updating carousel');
+          repositionVisibleSlides();
+          updateCarousel();
+        }, 100);
       }
     });
+    
+    console.log('✅ Carousel initialization complete\n');
   }
   
   // Only run on desktop initially
   if (window.innerWidth >= 750) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(initProductCarousel, 200);
+        setTimeout(initProductCarousel, 400);
       });
     } else {
-      setTimeout(initProductCarousel, 200);
+      setTimeout(initProductCarousel, 400);
     }
   }
   
