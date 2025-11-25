@@ -365,27 +365,36 @@
   
   let isCarouselActive = false;
   let carouselButtons = [];
+  let currentIndex = 0;
+  
+  function getCarouselSettings() {
+    const width = window.innerWidth;
+    if (width >= 1200) {
+      return { slideWidth: 450, gap: 10 };
+    } else if (width >= 990) {
+      return { slideWidth: 400, gap: 10 };
+    } else if (width >= 750) {
+      return { slideWidth: 320, gap: 10 };
+    }
+    return null;
+  }
   
   function initProductCarousel() {
-    // CRITICAL: Exit if mobile (below 750px) - don't do anything at all
+    // Exit if mobile (below 750px)
     if (window.innerWidth < 750) {
-      cleanupCarousel();
       return;
     }
     
-    // Exit if not carousel layout
     const product = document.querySelector('.product--carousel');
     if (!product) {
       return;
     }
     
-    // Look for media-gallery specifically (desktop only element)
     const gallery = product.querySelector('media-gallery');
     if (!gallery) {
       return;
     }
     
-    // Get the track
     const track = gallery.querySelector('.product__media-list');
     const slides = Array.from(gallery.querySelectorAll('.product__media-item'));
     
@@ -394,11 +403,13 @@
     }
     
     isCarouselActive = true;
-    let currentIndex = 0;
+    currentIndex = 0;
+    
+    const settings = getCarouselSettings();
+    if (!settings) return;
     
     function updateCarousel() {
-      const slideWidth = 400;
-      const gap = 20;
+      const { slideWidth, gap } = getCarouselSettings();
       const offset = -(currentIndex * (slideWidth + gap));
       
       track.style.transform = `translateX(${offset}px)`;
@@ -434,7 +445,6 @@
         return;
       }
       
-      // ONLY clone and setup buttons on desktop
       if (window.innerWidth >= 750) {
         const newPrevBtn = prevBtn.cloneNode(true);
         const newNextBtn = nextBtn.cloneNode(true);
@@ -465,38 +475,15 @@
     
     updateCarousel();
     setupButtons();
-  }
-  
-  function cleanupCarousel() {
-    const product = document.querySelector('.product--carousel');
-    if (!product) return;
     
-    // Clean up both media-gallery and slider-component
-    const gallery = product.querySelector('media-gallery');
-    const sliderComponent = product.querySelector('slider-component');
-    
-    [gallery, sliderComponent].forEach(container => {
-      if (!container) return;
-      
-      const track = container.querySelector('.product__media-list');
-      const slides = Array.from(container.querySelectorAll('.product__media-item'));
-      
-      // Remove all carousel transforms and classes
-      if (track) {
-        track.style.transform = '';
-        track.style.transition = '';
-        track.style.gap = '';
+    // Update carousel on resize within desktop range
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+      if (window.innerWidth >= 750 && isCarouselActive) {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(updateCarousel, 100);
       }
-      
-      slides.forEach((slide) => {
-        slide.classList.remove('carousel-active');
-        slide.style.opacity = '';
-        slide.style.transition = '';
-      });
     });
-    
-    isCarouselActive = false;
-    carouselButtons = [];
   }
   
   // Only run on desktop initially
@@ -510,23 +497,19 @@
     }
   }
   
-  // Reinitialize on window resize if crossing the 750px threshold
+  // Reload page when crossing 750px threshold
   let wasDesktop = window.innerWidth >= 750;
+  let reloadTimer;
+  
   window.addEventListener('resize', function() {
     const isDesktop = window.innerWidth >= 750;
+    
     if (isDesktop !== wasDesktop) {
       wasDesktop = isDesktop;
-      if (isDesktop) {
-        cleanupCarousel();
-        setTimeout(initProductCarousel, 200);
-      } else {
-        // Clean up carousel when going to mobile
-        cleanupCarousel();
-        // Force a page refresh on mobile to ensure native slider works
-        setTimeout(function() {
-          window.location.reload();
-        }, 100);
-      }
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(function() {
+        window.location.reload();
+      }, 300);
     }
   });
 })();
