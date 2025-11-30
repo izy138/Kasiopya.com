@@ -1,4 +1,5 @@
 
+
   /* ============================================
      VIDEO CONTAINER - RESPONSIVE BREAKPOINTS
      ============================================ */
@@ -301,7 +302,7 @@
       right: 0 !important;
       transform: translateY(-50%) !important;
       justify-content: space-between !important;
-      padding: 0 5px !important;
+      padding: 0 8px !important;
       pointer-events: none !important;
       z-index: 100 !important;
     }
@@ -309,8 +310,8 @@
     .product--carousel media-gallery .slider-button {
       pointer-events: all !important;
       display: flex !important;
-      width: 44px !important;
-      height: 44px !important;
+      width: 42px !important;
+      height: 42px !important;
       background: rgba(255, 255, 255, 0.95) !important;
       border: 1px solid rgba(0, 0, 0, 0.1) !important;
       border-radius: 50% !important;
@@ -361,7 +362,6 @@
       margin-top: -75px !important;
     }
   } */
-
 
 /* Mobile - Reset everything to ensure native slider works */
 @media screen and (max-width: 749px) {

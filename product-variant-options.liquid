@@ -110,7 +110,7 @@
       {{ label_unavailable }}
     </label> {% endcomment %}
 
- {%- elsif picker_type == 'button' -%}
+{%- elsif picker_type == 'button' -%}
     {%- liquid
       assign variant_for_value = null
       for variant in product.variants
@@ -148,24 +148,41 @@
       {% endif %}
     >
     
-{% comment %} Circular Color buttons {% endcomment %}
-        {% comment %} style="background-image: url({{ variant_for_value.image | image_url: width: 40 }});height:40px;width:40px;background-size: cover;background-position: center;" {% endcomment %}
- 
-     {% if variant_for_value.image != blank and option.name == 'Color' %}
-  <label 
-    for="{{ input_id }}"
-    style="background-image: url({{ variant_for_value.image | image_url: width: 120 }});height:50px;width:50px;background-size: cover;background-position: center;border-radius: 10px;margin-right: 0px;"
-  >
-    <span class="visually-hidden">{{ value }}</span>
-    {{ label_unavailable }}
-  </label>
-{% else %}
-  <label for="{{ input_id }}">
-    {{ value -}}
-    {{ label_unavailable }}
-  </label>
-{% endif %}
-     
+    {% comment %} Check for variant image first, then fallback to color swatch {% endcomment %}
+    {% if variant_for_value.image != blank and option.name == 'Color' %}
+      {% comment %} Show variant image as swatch {% endcomment %}
+      <label 
+        for="{{ input_id }}"
+        style="background-image: url({{ variant_for_value.image | image_url: width: 120 }});height:50px;width:50px;background-size: cover;background-position: center;border-radius: 10px;margin-right: 8px;"
+      >
+        <span class="visually-hidden">{{ value }}</span>
+        {{ label_unavailable }}
+      </label>
+    {% elsif value.swatch.color and option.name == 'Color' %}
+      {% comment %} Show solid color swatch {% endcomment %}
+      <label 
+        for="{{ input_id }}"
+        style="background-color: {{ value.swatch.color }};height:50px;width:50px;border-radius: 10px;margin-right: 8px;border: 1px solid rgba(0,0,0,0.1);"
+      >
+        <span class="visually-hidden">{{ value }}</span>
+        {{ label_unavailable }}
+      </label>
+    {% elsif value.swatch.image and option.name == 'Color' %}
+      {% comment %} Show swatch image (if uploaded in color settings) {% endcomment %}
+      <label 
+        for="{{ input_id }}"
+        style="background-image: url({{ value.swatch.image | image_url: width: 120 }});height:50px;width:50px;background-size: cover;background-position: center;border-radius: 10px;margin-right: 8px;"
+      >
+        <span class="visually-hidden">{{ value }}</span>
+        {{ label_unavailable }}
+      </label>
+    {% else %}
+      {% comment %} Fallback to regular text pill {% endcomment %}
+      <label for="{{ input_id }}">
+        {{ value -}}
+        {{ label_unavailable }}
+      </label>
+    {% endif %}
 
   {%- elsif picker_type == 'dropdown' or picker_type == 'swatch_dropdown' -%}
     <option
