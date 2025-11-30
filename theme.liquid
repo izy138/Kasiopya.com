@@ -381,13 +381,14 @@
     }
   });
   
-  // CRITICAL: Exit immediately if mobile - don't load script at all on mobile
-  if (window.innerWidth < 750) {
-    console.log('📱 Mobile detected - carousel script not loaded');
-    return; // Exit immediately, don't do anything
-  }
+  // Check if mobile - we'll handle variant filtering on mobile, but not carousel
+  const isMobileDevice = window.innerWidth < 750;
   
+  if (isMobileDevice) {
+    console.log('📱 Mobile detected - variant filtering only (no carousel)');
+  } else {
   console.log('🔵 UNIFIED CAROUSEL + VARIANT IMAGES SCRIPT LOADED');
+  }
   
   let isCarouselActive = false;
   let carouselButtons = [];
@@ -399,9 +400,63 @@
   let colorImageRanges = {};
   let isTransitioning = false;
   
-  // CRITICAL: Mobile detection helper - exit immediately if mobile
+  // Mobile detection helper
   function isMobile() {
     return window.innerWidth < 750;
+  }
+  
+  // Mobile variant filtering helper - updates slider counter
+  function updateMobileSliderCounter() {
+    if (!isMobile() || !gallery) return;
+    
+    const visibleSlides = getVisibleSlides();
+    const counterCurrent = gallery.querySelector('.slider-counter--current');
+    const counterTotal = gallery.querySelector('.slider-counter--total');
+    const mediaList = gallery.querySelector('.product__media-list');
+    
+    if (!mediaList || visibleSlides.length === 0) return;
+    
+    // Update counter only if value changed to avoid unnecessary DOM updates
+    if (counterTotal && counterTotal.textContent != visibleSlides.length) {
+      counterTotal.textContent = visibleSlides.length;
+    }
+    
+    // Find the currently active slide
+    const activeSlide = mediaList.querySelector('.is-active, .slider__slide--active, [aria-current="true"]');
+    
+    // If we have an active slide, find its index in visible slides
+    if (activeSlide && visibleSlides.includes(activeSlide)) {
+      currentIndex = visibleSlides.indexOf(activeSlide);
+    } else if (activeSlide) {
+      // Active slide is hidden, find first visible slide
+      const firstVisible = visibleSlides[0];
+      if (firstVisible) {
+        // Remove active class from all slides
+        mediaList.querySelectorAll('.is-active, .slider__slide--active').forEach(slide => {
+          slide.classList.remove('is-active', 'slider__slide--active');
+          slide.removeAttribute('aria-current');
+        });
+        // Set first visible as active
+        firstVisible.classList.add('is-active');
+        firstVisible.setAttribute('aria-current', 'true');
+        currentIndex = 0;
+      }
+    } else {
+      // No active slide, set first visible as active
+      const firstVisible = visibleSlides[0];
+      if (firstVisible) {
+        firstVisible.classList.add('is-active');
+        firstVisible.setAttribute('aria-current', 'true');
+        currentIndex = 0;
+      }
+    }
+    
+    // Update current counter only if value changed
+    if (counterCurrent && counterCurrent.textContent != (currentIndex + 1)) {
+      counterCurrent.textContent = currentIndex + 1;
+    }
+    
+    console.log('📱 Mobile counter updated:', (currentIndex + 1) + '/' + visibleSlides.length);
   }
   
   function getCarouselSettings() {
@@ -433,18 +488,23 @@
   // ============================================
   
   function showVariantImages(selectedColor) {
-    // CRITICAL: Exit immediately if mobile - don't modify images on mobile
-    if (isMobile()) {
-      return;
-    }
-    
-    console.log('🎨 Showing images for color:', selectedColor);
+    console.log('🎨 Showing images for color:', selectedColor, isMobile() ? '(mobile)' : '(desktop)');
     
     const allSlides = getAllSlides();
     console.log('Total slides:', allSlides.length);
     
     let shownCount = 0;
     let hiddenCount = 0;
+    
+    // On mobile, update counter immediately before filtering to prevent flash
+    if (isMobile()) {
+      const visibleSlides = getVisibleSlides();
+      const counterTotal = gallery?.querySelector('.slider-counter--total');
+      if (counterTotal && visibleSlides.length > 0) {
+        // Pre-update with estimated count (will be corrected after filtering)
+        counterTotal.textContent = '...';
+      }
+    }
     
     // Show/hide images based on selected color
     allSlides.forEach(slide => {
@@ -459,14 +519,17 @@
     });
     
     console.log('Variant filtering:', shownCount, 'shown,', hiddenCount, 'hidden');
+    
+    // On mobile, update slider counter immediately after filtering
+    if (isMobile()) {
+      // Use requestAnimationFrame for immediate visual update
+      requestAnimationFrame(function() {
+        updateMobileSliderCounter();
+      });
+    }
   }
   
   function setupVariantImageMapping(sectionID) {
-    // CRITICAL: Exit immediately if mobile - don't do variant mapping on mobile
-    if (isMobile()) {
-      return;
-    }
-    
     const handle = `products/${product.dataset.productHandle || window.location.pathname.split('/').pop()}.js`;
     
     fetch(`${window.Shopify.routes.root}${handle}`)
@@ -535,11 +598,9 @@
         
         console.log('✅ Variant image mapping complete:', colorImageRanges);
         
-        // Show initial variant - ONLY on desktop
-        if (!isMobile()) {
-          // Try to get selected color, with a small delay to allow variant select to initialize
-          setTimeout(function() {
-            if (!isMobile() && isCarouselActive) {
+        // Show initial variant - works on both mobile and desktop
+        // Use requestAnimationFrame for immediate update
+        requestAnimationFrame(function() {
               const initialColor = getSelectedColor();
               console.log('Initial color selected:', initialColor);
               console.log('Available color ranges:', Object.keys(colorImageRanges));
@@ -554,9 +615,13 @@
                 allSlides.forEach(slide => {
                   slide.classList.remove('hidden');
                 });
+            if (isMobile()) {
+              updateMobileSliderCounter();
+            }
               }
               
-              // Now that variant images are set, set up carousel
+          // Desktop: Set up carousel after variant images are set
+          if (!isMobile() && isCarouselActive) {
               const visibleBefore = getVisibleSlides().length;
               console.log('Visible slides before repositioning:', visibleBefore);
               
@@ -567,18 +632,21 @@
               const visibleAfter = getVisibleSlides().length;
               console.log('Visible slides after setup:', visibleAfter);
             }
-          }, 200);
-        }
+        });
       })
       .catch(error => {
         console.error('❌ Error loading product data:', error);
-        // On error, still try to set up carousel with all images
+        // On error, still try to set up carousel with all images (desktop only)
         if (!isMobile() && isCarouselActive) {
           setTimeout(function() {
             repositionVisibleSlides();
             updateCarousel();
             setupButtons();
           }, 100);
+        }
+        // On mobile, just update counter
+        if (isMobile()) {
+          updateMobileSliderCounter();
         }
       });
   }
@@ -806,25 +874,20 @@
   }
   
   function refreshCarousel(selectedColor) {
-    // CRITICAL: Exit immediately if mobile - don't do anything at all
-    if (isMobile()) {
-      return;
-    }
-  
-    if (!isCarouselActive) return;
-    
-    console.log('\n🔄 REFRESH CAROUSEL for color:', selectedColor);
-    
-    // Disable transition during repositioning
-    isTransitioning = true;
+    console.log('\n🔄 REFRESH for color:', selectedColor, isMobile() ? '(mobile)' : '(desktop)');
     
     // Reset to first slide
     currentIndex = 0;
     
-    // Show correct variant images
+    // Show correct variant images (works on both mobile and desktop)
     if (selectedColor) {
       showVariantImages(selectedColor);
     }
+    
+    // Desktop: Reposition and update carousel
+    if (!isMobile() && isCarouselActive) {
+      // Disable transition during repositioning
+      isTransitioning = true;
     
     // Reposition visible slides to be consecutive
     repositionVisibleSlides();
@@ -836,6 +899,45 @@
       // Re-setup buttons to ensure they work
       setupButtons();
     }, 50);
+    }
+    
+    // Mobile: Just update counter and reset slider position
+    if (isMobile()) {
+      const visibleSlides = getVisibleSlides();
+      if (visibleSlides.length > 0) {
+        // Remove active class from all slides
+        const allSlides = getAllSlides();
+        allSlides.forEach(slide => {
+          slide.classList.remove('is-active', 'slider__slide--active');
+          slide.removeAttribute('aria-current');
+        });
+        
+        // Set first visible slide as active
+        const firstVisible = visibleSlides[0];
+        firstVisible.classList.add('is-active');
+        firstVisible.setAttribute('aria-current', 'true');
+        currentIndex = 0;
+        
+        // Try to trigger slider to go to first visible slide
+        const sliderComponent = gallery?.querySelector('slider-component');
+        if (sliderComponent && firstVisible) {
+          // Find the index of first visible slide in all slides (including hidden)
+          const allSlidesArray = Array.from(gallery.querySelectorAll('.product__media-item'));
+          const slideIndex = allSlidesArray.indexOf(firstVisible);
+          if (slideIndex >= 0) {
+            // Use slider's internal method if available
+            if (sliderComponent.goToSlide) {
+              sliderComponent.goToSlide(slideIndex);
+            } else {
+              // Fallback: scroll into view
+              firstVisible.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }
+        }
+      }
+      // Update counter after resetting position
+      updateMobileSliderCounter();
+    }
   }
   
   // ============================================
@@ -843,12 +945,8 @@
   // ============================================
   
   function init() {
-    // CRITICAL: Exit if mobile (below 750px) - don't do anything at all
-    if (isMobile()) {
-      return;
-    }
-    
-    console.log('🚀 INITIALIZING UNIFIED CAROUSEL + VARIANT IMAGES');
+    const mobile = isMobile();
+    console.log(mobile ? '🚀 INITIALIZING VARIANT FILTERING (MOBILE)' : '🚀 INITIALIZING UNIFIED CAROUSEL + VARIANT IMAGES (DESKTOP)');
     
     product = document.querySelector('.product--carousel');
     if (!product) {
@@ -872,69 +970,271 @@
     
     console.log('Total slides found:', allSlides.length);
     
-    isCarouselActive = true;
-    currentIndex = 0;
-    
-    const settings = getCarouselSettings();
-    if (!settings) {
-      console.log('No carousel settings for this screen size');
-      return;
+    // Only activate carousel on desktop
+    if (!mobile) {
+      isCarouselActive = true;
     }
-    
+      currentIndex = 0;
+      
     const sectionID = product.closest('[data-section]')?.dataset.section || 'main';
     
-    // CRITICAL: When switching from mobile to desktop, ensure all images are visible first
-    // Then hide them based on variant selection
-    // Reuse allSlides variable already declared above
+    // On mobile, immediately override counter to prevent showing wrong count
+    if (mobile) {
+      const counterTotal = gallery.querySelector('.slider-counter--total');
+      const counterCurrent = gallery.querySelector('.slider-counter--current');
+      if (counterTotal) {
+        counterTotal.textContent = '...';
+      }
+      if (counterCurrent) {
+        counterCurrent.textContent = '1';
+      }
+    }
+    
+    // Ensure all images are visible first, then hide them based on variant selection
     allSlides.forEach(slide => {
       slide.classList.remove('hidden');
     });
     
-    // Setup variant image mapping FIRST
-    // The carousel setup will happen inside setupVariantImageMapping after mapping completes
+    // Setup variant image mapping FIRST (works on both mobile and desktop)
     setupVariantImageMapping(sectionID);
     
-    // Fallback: If variant mapping takes too long or fails, set up carousel anyway
-    // This ensures carousel works even if variant mapping has issues
-    let fallbackSetup = false;
-    setTimeout(function() {
-      console.log('Fallback: Checking if carousel needs setup');
-      // Make sure we're still on desktop and variant mapping hasn't already set up carousel
-      if (!isMobile() && isCarouselActive && !fallbackSetup) {
-        // Check if buttons are already set up (variant mapping completed)
-        // If carouselButtons is empty, buttons haven't been set up yet
-        if (carouselButtons.length === 0) {
-          // Variant mapping hasn't completed yet or buttons not set up, set up with all images visible
-          console.log('Fallback: Setting up carousel with all images');
-          fallbackSetup = true;
-          const allSlides = getAllSlides();
-          allSlides.forEach(slide => {
-            slide.classList.remove('hidden');
-          });
-          repositionVisibleSlides();
-          updateCarousel();
-          setupButtons();
-        } else {
-          console.log('Carousel already set up by variant mapping');
-        }
+    // Desktop: Fallback carousel setup if variant mapping takes too long
+    if (!mobile) {
+      const settings = getCarouselSettings();
+      if (!settings) {
+        console.log('No carousel settings for this screen size');
+        return;
       }
-    }, 1500); // Longer timeout as fallback (after variant mapping's 200ms delay + fetch time)
+      
+      let fallbackSetup = false;
+      setTimeout(function() {
+        console.log('Fallback: Checking if carousel needs setup');
+        if (!isMobile() && isCarouselActive && !fallbackSetup) {
+          if (carouselButtons.length === 0) {
+            console.log('Fallback: Setting up carousel with all images');
+            fallbackSetup = true;
+            const allSlides = getAllSlides();
+            allSlides.forEach(slide => {
+              slide.classList.remove('hidden');
+            });
+            repositionVisibleSlides();
+            updateCarousel();
+            setupButtons();
+          } else {
+            console.log('Carousel already set up by variant mapping');
+          }
+        }
+      }, 1500);
+    }
     
-    // Listen for variant changes - ONLY on desktop
-    if (!isMobile()) {
-      const productSection = document.querySelector('.product-variant-id, variant-selects');
-      if (productSection) {
-        productSection.addEventListener('change', function(e) {
-          console.log('⚙️ Variant changed');
-          const selectedColor = getSelectedColor();
-          if (selectedColor) {
+    // Listen for variant changes - works on both mobile and desktop
+    const productSection = document.querySelector('.product-variant-id, variant-selects');
+    if (productSection) {
+      productSection.addEventListener('change', function(e) {
+        console.log('⚙️ Variant changed');
+        const selectedColor = getSelectedColor();
+        if (selectedColor) {
             refreshCarousel(selectedColor);
           }
+      });
+    }
+    
+    // Mobile: Track and override slider counter (simplified approach)
+    if (isMobile() && gallery) {
+      const sliderComponent = gallery.querySelector('slider-component');
+      const mediaList = gallery.querySelector('.product__media-list');
+      const counterTotal = gallery.querySelector('.slider-counter--total');
+      const counterCurrent = gallery.querySelector('.slider-counter--current');
+      
+      if (sliderComponent && mediaList && counterTotal) {
+        let isOurUpdate = false; // Flag to prevent infinite loops
+        
+        // Function to update counter based on visible slides
+        const updateCounter = function() {
+          if (isOurUpdate) return; // Don't update if we're in the middle of our own update
+          
+          const visibleSlides = getVisibleSlides();
+          if (visibleSlides.length === 0) return;
+          
+          // Get Shopify's current counter value (which counts ALL slides)
+          let shopifyCurrentSlide = 1;
+          if (counterCurrent) {
+            shopifyCurrentSlide = parseInt(counterCurrent.textContent) || 1;
+          }
+          
+          // Convert Shopify's slide number (all slides) to visible slide index
+          // Count visible slides up to Shopify's current position
+          const allSlides = Array.from(mediaList.querySelectorAll('.product__media-item'));
+          let visibleCount = 0;
+          let foundIndex = 0;
+          
+          for (let i = 0; i < allSlides.length; i++) {
+            if (!allSlides[i].classList.contains('hidden')) {
+              visibleCount++;
+              // If we've reached Shopify's current slide position, this is our index
+              if (visibleCount === shopifyCurrentSlide) {
+                foundIndex = visibleCount - 1; // Convert to 0-based index
+                break;
+              }
+            }
+          }
+          
+          // If we didn't find it (Shopify's counter might be ahead), use the last visible
+          if (foundIndex === 0 && visibleCount < shopifyCurrentSlide) {
+            foundIndex = visibleSlides.length - 1;
+          }
+          
+          // Ensure index is within bounds
+          if (foundIndex >= visibleSlides.length) {
+            foundIndex = visibleSlides.length - 1;
+          }
+          if (foundIndex < 0) {
+            foundIndex = 0;
+          }
+          
+          currentIndex = foundIndex;
+          
+          // Override Shopify's counter immediately
+          const correctTotal = visibleSlides.length;
+          const correctCurrent = currentIndex + 1;
+          
+          // Check if counter needs updating
+          const currentTotalValue = counterTotal ? parseInt(counterTotal.textContent) : 0;
+          const currentCurrentValue = counterCurrent ? parseInt(counterCurrent.textContent) : 0;
+          
+          // Only update if values are wrong
+          if (currentTotalValue !== correctTotal || currentCurrentValue !== correctCurrent) {
+            isOurUpdate = true; // Set flag before updating
+            
+            // Update counter
+            if (counterTotal) {
+              counterTotal.textContent = correctTotal;
+            }
+            if (counterCurrent) {
+              counterCurrent.textContent = correctCurrent;
+            }
+            
+            // Reset flag after a brief moment
+            setTimeout(function() {
+              isOurUpdate = false;
+            }, 10);
+            
+            console.log('📱 Counter corrected:', correctCurrent + '/' + correctTotal, 
+                       'Shopify had:', shopifyCurrentSlide, 
+                       'Visible index:', currentIndex);
+          }
+        };
+        
+        // Use MutationObserver to watch for slide changes only
+        const slideObserver = new MutationObserver(function(mutations) {
+          let shouldUpdate = false;
+          mutations.forEach(function(mutation) {
+            // Only update on slide class changes
+            if (mutation.type === 'attributes' && 
+                (mutation.attributeName === 'class' || mutation.attributeName === 'aria-current') &&
+                mutation.target.classList.contains('product__media-item')) {
+              shouldUpdate = true;
+            }
+          });
+          if (shouldUpdate) {
+            // Small delay to let Shopify finish its update first
+            setTimeout(updateCounter, 50);
+          }
         });
+        
+        // Observe the media list for slide changes
+        slideObserver.observe(mediaList, {
+          attributes: true,
+          attributeFilter: ['class', 'aria-current'],
+          subtree: true,
+          childList: false
+        });
+        
+        // Listen for click events on slider buttons
+        const prevBtn = gallery.querySelector('.slider-button--prev');
+        const nextBtn = gallery.querySelector('.slider-button--next');
+        
+        const handleButtonClick = function() {
+          // Update after a short delay to let slide change first
+          setTimeout(updateCounter, 100);
+          setTimeout(updateCounter, 200);
+        };
+        
+        if (prevBtn) {
+          prevBtn.addEventListener('click', handleButtonClick, true);
+        }
+        
+        if (nextBtn) {
+          nextBtn.addEventListener('click', handleButtonClick, true);
+        }
+        
+        // Listen for touch/swipe events
+        let touchStartX = 0;
+        mediaList.addEventListener('touchstart', function(e) {
+          touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+        
+        mediaList.addEventListener('touchend', function(e) {
+          const touchEndX = e.changedTouches[0].clientX;
+          const diff = touchStartX - touchEndX;
+          if (Math.abs(diff) > 50) { // Swipe detected
+            setTimeout(updateCounter, 150);
+          }
+        }, { passive: true });
+        
+        // Watch counter elements for Shopify's updates and immediately correct them
+        const counterObserver = new MutationObserver(function(mutations) {
+          if (isOurUpdate) return; // Ignore our own updates
+          
+          let counterChanged = false;
+          mutations.forEach(function(mutation) {
+            if (mutation.type === 'characterData' || mutation.type === 'childList') {
+              const target = mutation.target;
+              if (target === counterTotal || target === counterCurrent ||
+                  (counterTotal && counterTotal.contains(target)) ||
+                  (counterCurrent && counterCurrent.contains(target)) ||
+                  (target.nodeType === 3 && target.parentElement &&
+                   (target.parentElement === counterTotal || target.parentElement === counterCurrent))) {
+                counterChanged = true;
+              }
+            }
+          });
+          
+          if (counterChanged) {
+            // Shopify updated the counter, correct it immediately
+            requestAnimationFrame(updateCounter);
+          }
+        });
+        
+        // Observe counter elements
+        if (counterTotal) {
+          counterObserver.observe(counterTotal, {
+            childList: true,
+            characterData: true,
+            subtree: true
+          });
+        }
+        if (counterCurrent) {
+          counterObserver.observe(counterCurrent, {
+            childList: true,
+            characterData: true,
+            subtree: true
+          });
+        }
+        
+        // Light polling as backup to catch any missed updates
+        let lastCounterValue = null;
+        setInterval(function() {
+          const currentCounterValue = counterTotal ? counterTotal.textContent + '/' + (counterCurrent ? counterCurrent.textContent : '') : null;
+          if (currentCounterValue !== lastCounterValue) {
+            lastCounterValue = currentCounterValue;
+            updateCounter();
+          }
+        }, 200);
       }
     }
     
-    // Update carousel on resize within desktop range
+    // Update carousel on resize within desktop range (desktop only)
     let resizeTimer;
     window.addEventListener('resize', function() {
       if (!isMobile() && isCarouselActive) {
@@ -944,21 +1244,25 @@
           repositionVisibleSlides();
           updateCarousel();
         }, 100);
+      } else if (isMobile()) {
+        // On mobile, just update counter on resize
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+          updateMobileSliderCounter();
+        }, 100);
       }
     });
     
     console.log('✅ Initialization complete\n');
   }
   
-  // Only run on desktop
-  if (!isMobile()) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(init, 200);
-      });
-    } else {
+  // Run on both mobile and desktop (variant filtering works on both)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
       setTimeout(init, 200);
-    }
+    });
+  } else {
+    setTimeout(init, 200);
   }
   
   // Note: Resize listener for page reload is set up at the very top of the script

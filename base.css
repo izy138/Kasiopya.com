@@ -394,21 +394,16 @@
     flex: 0 0 100% !important;
   }
   
-  /* Show all items including hidden variant images on mobile */
-  /* CRITICAL: Override desktop .hidden class to show all images on mobile */
+  /* Variant filtering on mobile - respect .hidden class for variant images */
+  /* Hide variant images that don't match selected variant */
   .product--carousel media-gallery slider-component .product__media-item.hidden {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
+    display: none !important;
+    /* Completely remove from layout - slider will skip these visually */
   }
   
   /* Also target media-gallery directly (not just slider-component) */
   .product--carousel media-gallery .product__media-item.hidden {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
+    display: none !important;
   }
   
   /* Remove carousel-specific opacity states */
