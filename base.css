@@ -1,5 +1,6 @@
 
 
+
   /* ============================================
      VIDEO CONTAINER - RESPONSIVE BREAKPOINTS
      ============================================ */
@@ -79,6 +80,7 @@
     }
   }
   
+
 /* DIAGNOSTIC - Remove after testing */
 /* @media screen and (min-width: 750px) {
   body:has(.product__media-wrapper) .product__media-list {
@@ -97,328 +99,307 @@
 
 /* Large desktop (1200px+) */
 @media screen and (min-width: 1200px) {
-  .product--carousel.product--columns {
-    display: grid !important;
-    grid-template-columns: 600px 1fr !important;
-    gap: 2rem !important;
-    align-items: start !important;
-    margin-left: 50px !important;
+    .product--carousel.product--columns {
+      display: grid !important;
+      grid-template-columns: 600px 1fr !important;
+      gap: 2rem !important;
+      align-items: start !important;
+      margin-left: 50px !important;
+    }
+  
+    
+    .product--carousel .product__media-wrapper.grid__item {
+      margin-top: -75px !important;
+    }
+    
+    
+    .product--carousel .product__media-wrapper,
+    .product--carousel media-gallery {
+      max-width: 600px !important;
+    }
+    
+    .product--carousel media-gallery slider-component {
+      padding: 40px 75px !important;
+    }
+    
+    .product--carousel .product__media-item {
+      flex: 0 0 450px !important;
+      width: 450px !important;
+      min-width: 450px !important;
+      height: auto !important;
+    }
+    
+    .product--carousel #MainProduct-template--25539644817699__main {
+      padding-left: 50px !important;
+    }
+    
+    .product--carousel #MainProduct-template--25539644817699__main .page-width {
+      padding-left: 50px !important;
+      max-width: calc(1400px + 50px) !important;
+    }
   }
+  
+  /* Medium desktop (990px - 1199px) */
+  @media screen and (min-width: 990px) and (max-width: 1199px) {
+    .product--carousel.product--columns {
+      display: grid !important;
+      grid-template-columns: 500px 1fr !important;
+      gap: 2rem !important;
+      align-items: start !important;
+      margin-left: 30px !important;
+    }
+    
+    .product--carousel .product__media-wrapper,
+    .product--carousel media-gallery {
+      max-width: 500px !important;
+    }
+    
+    .product--carousel media-gallery slider-component {
+      padding: 30px 50px !important;
+    }
 
-  
-  .product--carousel .product__media-wrapper.grid__item {
-    margin-top: -75px !important;
+    .product--carousel media-gallery .slider-counter {
+      bottom: -280px !important;
+    }
+    
+    .product--carousel .product__media-item {
+      flex: 0 0 400px !important;
+      width: 400px !important;
+      min-width: 400px !important;
+      height: auto !important;
+    }
+    
+    .product--carousel #MainProduct-template--25539644817699__main {
+      padding-left: 30px !important;
+    }
+    
+    .product--carousel #MainProduct-template--25539644817699__main .page-width {
+      padding-left: 30px !important;
+      max-width: calc(1200px + 30px) !important;
+    }
   }
   
-  
-  .product--carousel .product__media-wrapper,
-  .product--carousel media-gallery {
-    max-width: 600px !important;
+  /* Tablet (750px - 989px) - FIXED OVERFLOW */
+  @media screen and (min-width: 750px) and (max-width: 989px) {
+    .product--carousel.product--columns {
+      display: grid !important;
+      grid-template-columns: 380px 1fr !important;
+      gap: 1.5rem !important;
+      align-items: start !important;
+      margin-left: 15px !important;
+    }
+    
+    .product--carousel .product__media-wrapper {
+      max-width: 380px !important;
+      overflow: hidden !important; /* Critical for hiding slides */
+    }
+    
+    .product--carousel media-gallery {
+      max-width: 380px !important;
+      overflow: hidden !important; /* Also critical */
+    }
+    
+    .product--carousel media-gallery slider-component {
+      padding: 20px 30px !important;
+      overflow: hidden !important; /* Prevent overflow here too */
+    }
+    
+    .product--carousel .product__media-item {
+      flex: 0 0 320px !important;
+      width: 320px !important;
+      min-width: 320px !important;
+      height: auto !important;
+    }
+    
+    .product--carousel #MainProduct-template--25539644817699__main {
+      padding-left: 15px !important;
+      padding-right: 15px !important;
+    }
+    
+    .product--carousel #MainProduct-template--25539644817699__main .page-width {
+      padding-left: 15px !important;
+      padding-right: 15px !important;
+      max-width: calc(990px + 15px) !important;
+    }
   }
   
-  .product--carousel media-gallery slider-component {
-    padding: 40px 75px !important;
+  /* Desktop carousel styles - ONLY APPLY ABOVE 750px */
+  @media screen and (min-width: 750px) {
+    .product--carousel .product__media-wrapper {
+      overflow: hidden !important;
+    }
+    
+    .product--carousel media-gallery {
+      display: block !important;
+      width: 100% !important;
+      position: relative !important;
+    }
+    
+    /* ONLY target media-gallery list on desktop */
+    /* The media-list is inside slider-component, but on desktop we override it for carousel */
+    .product--carousel media-gallery slider-component .product__media-list {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      gap: 20px !important;
+      position: relative !important;
+      left: 0 !important;
+      transition: transform 0.5s ease !important;
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    .product--carousel media-gallery slider-component .product__media-item {
+      opacity: 1 !important;
+      transition: opacity 0.3s ease !important;
+    }
+    
+    .product--carousel media-gallery slider-component .product__media-item:not(.carousel-active) {
+      opacity: 0.4 !important;
+    }
+    
+    .product--carousel media-gallery .product__media-item.carousel-active {
+      opacity: 1 !important;
+    }
+    
+    /* CRITICAL: Ensure hidden variant images are completely invisible */
+    .product--carousel media-gallery .product__media-item.hidden {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+      display: none !important;
+    }
+    
+    .product--carousel media-gallery .slider-buttons {
+      display: flex !important;
+      position: absolute !important;
+      top: 50% !important;
+      left: 0 !important;
+      right: 0 !important;
+      transform: translateY(-50%) !important;
+      justify-content: space-between !important;
+      padding: 0 5px !important;
+      pointer-events: none !important;
+      z-index: 100 !important;
+    }
+    
+    .product--carousel media-gallery .slider-button {
+      pointer-events: all !important;
+      display: flex !important;
+      width: 44px !important;
+      height: 44px !important;
+      background: rgba(255, 255, 255, 0.95) !important;
+      border: 1px solid rgba(0, 0, 0, 0.1) !important;
+      border-radius: 50% !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    .product--carousel media-gallery .slider-button:hover {
+      background: white !important;
+      transform: scale(1.1) !important;
+    }
+    
+    .product--carousel media-gallery .slider-button[disabled] {
+      opacity: 0.3 !important;
+      cursor: not-allowed !important;
+    }
+    
+    .product--carousel media-gallery .slider-button svg {
+      width: 18px !important;
+      height: 18px !important;
+    }
+    
+    .product--carousel media-gallery .slider-counter {
+      position: absolute !important;
+      bottom: -280px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      background: rgba(255, 255, 255, 0.9) !important;
+      padding: 6px 12px !important;
+      border-radius: 15px !important;
+      font-size: 14px !important;
+      z-index: 100 !important;
+    }
   }
   
-  .product--carousel .product__media-item {
-    flex: 0 0 450px !important;
-    width: 450px !important;
-    min-width: 450px !important;
+  /* @media screen and (min-width: 750px) {
+    .product--carousel .product__media-wrapper.grid__item {
+      margin-top: -45px !important;
+    }
+  }
+  
+  @media screen and (min-width: 1200px) {
+    .product--carousel .product__media-wrapper.grid__item {
+      margin-top: -75px !important;
+    }
+  } */
+
+
+/* Mobile - Reset everything to ensure native slider works */
+@media screen and (max-width: 749px) {
+  /* CRITICAL: Remove ALL carousel styling from mobile - let Shopify's default slider work */
+  /* DO NOT override transform/transition - Shopify's slider-component needs these! */
+  /* Only remove carousel-specific positioning that might interfere */
+  .product--carousel media-gallery slider-component .product__media-list {
+    /* Don't override transform - let slider-component handle it */
+    /* Don't override transition - let slider-component handle it */
+    left: auto !important;
+    position: relative !important; /* Relative, not static, so transforms work */
     height: auto !important;
+    gap: inherit !important;
+    /* Keep flex for slider */
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
   }
   
-  .product--carousel #MainProduct-template--25539644817699__main {
-    padding-left: 50px !important;
-  }
-  
-  .product--carousel #MainProduct-template--25539644817699__main .page-width {
-    padding-left: 50px !important;
-    max-width: calc(1400px + 50px) !important;
-  }
-}
-
-/* Medium desktop (990px - 1199px) */
-@media screen and (min-width: 990px) and (max-width: 1199px) {
-  .product--carousel.product--columns {
-    display: grid !important;
-    grid-template-columns: 500px 1fr !important;
-    gap: 2rem !important;
-    align-items: start !important;
-    margin-left: 30px !important;
-  }
-  
-  .product--carousel .product__media-wrapper,
-  .product--carousel media-gallery {
-    max-width: 500px !important;
-  }
-  
-  .product--carousel media-gallery slider-component {
-    padding: 30px 50px !important;
-  }
-
-  .product--carousel media-gallery .slider-counter {
-    bottom: -280px !important;
-  }
-  
-  .product--carousel .product__media-item {
-    flex: 0 0 400px !important;
-    width: 400px !important;
-    min-width: 400px !important;
-    height: auto !important;
-  }
-  
-  .product--carousel #MainProduct-template--25539644817699__main {
-    padding-left: 30px !important;
-  }
-  
-  .product--carousel #MainProduct-template--25539644817699__main .page-width {
-    padding-left: 30px !important;
-    max-width: calc(1200px + 30px) !important;
-  }
-}
-
-/* Tablet (750px - 989px) - FIXED OVERFLOW */
-@media screen and (min-width: 750px) and (max-width: 989px) {
-  .product--carousel.product--columns {
-    display: grid !important;
-    grid-template-columns: 380px 1fr !important;
-    gap: 1.5rem !important;
-    align-items: start !important;
-    margin-left: 15px !important;
-  }
-  
-  .product--carousel .product__media-wrapper {
-    max-width: 380px !important;
-    overflow: hidden !important; /* Critical for hiding slides */
-  }
-  
-  .product--carousel media-gallery {
-    max-width: 380px !important;
-    overflow: hidden !important; /* Also critical */
-  }
-  
-  .product--carousel media-gallery slider-component {
-    padding: 20px 30px !important;
-    overflow: hidden !important; /* Prevent overflow here too */
-  }
-  
-  .product--carousel .product__media-item {
-    flex: 0 0 320px !important;
-    width: 320px !important;
-    min-width: 320px !important;
-    height: auto !important;
-  }
-  
-  .product--carousel #MainProduct-template--25539644817699__main {
-    padding-left: 15px !important;
-    padding-right: 15px !important;
-  }
-  
-  .product--carousel #MainProduct-template--25539644817699__main .page-width {
-    padding-left: 15px !important;
-    padding-right: 15px !important;
-    max-width: calc(990px + 15px) !important;
-  }
-}
-
-/* Desktop carousel styles - ONLY APPLY ABOVE 750px */
-@media screen and (min-width: 750px) {
-  /* Aggressive removal of all top spacing */
-  .product--carousel {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-  }
-  
-  .product--carousel.product--columns {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-  }
-  
-  .product--carousel .grid__item {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-  }
-  
-  .product--carousel .product__media-wrapper.grid__item {
-    margin-top: -45px !important;
-  }
-
-
-}
-  .product--carousel .product__media-wrapper {
-    overflow: hidden !important;
-    position: sticky !important;
-    top: 75px !important; /* Very close to top */
-    align-self: start !important;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-  
-  /* Account for sticky header */
-  body:has(.shopify-section-header-sticky) .product--carousel .product__media-wrapper {
-    top: calc(var(--header-height, 5px) - 40px) !important;
-  }
-  
-  /* Remove spacing from all parent containers */
-  .product--carousel #MainProduct-template--25539644817699__main {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-  }
-  
-  .product--carousel #MainProduct-template--25539644817699__main .page-width {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-  }
-  
-  .product--carousel media-gallery {
-    display: block !important;
+  /* Reset media items - remove any carousel positioning but keep slider behavior */
+  .product--carousel media-gallery slider-component .product__media-item {
+    opacity: 1 !important;
+    /* Don't override transition - let slider handle it */
+    position: relative !important; /* Relative, not static */
+    left: auto !important;
     width: 100% !important;
-    position: relative !important;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+    min-width: auto !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    flex: 0 0 100% !important;
   }
   
-  .product--carousel media-gallery slider-component {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-.product--carousel media-gallery .product__media-list {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  gap: 10px !important;
-  position: relative !important;
-  left: 0 !important;
-  transition: transform 0.5s ease !important;
-  list-style: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  align-items: stretch !important;
-}
-
-.product--carousel media-gallery .product__media-item {
-  opacity: 1 !important;
-  transition: opacity 0.3s ease !important;
-  flex-shrink: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-/* ... all other carousel styles ... */
-
-/* CRITICAL: Ensure hidden variant images are completely invisible */
-.product--carousel media-gallery .product__media-item.hidden {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  visibility: hidden !important;
-  display: none !important;
-}
-
-  
-  .product--carousel media-gallery .product__media-item img {
-    width: 100% !important;
-    height: auto !important;
+  /* Show all items including hidden variant images on mobile */
+  /* CRITICAL: Override desktop .hidden class to show all images on mobile */
+  .product--carousel media-gallery slider-component .product__media-item.hidden {
     display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
   
-  .product--carousel media-gallery .product__media-item:not(.carousel-active) {
-    opacity: 0.4 !important;
+  /* Also target media-gallery directly (not just slider-component) */
+  .product--carousel media-gallery .product__media-item.hidden {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
   
-  .product--carousel media-gallery .product__media-item.carousel-active {
+  /* Remove carousel-specific opacity states */
+  .product--carousel media-gallery slider-component .product__media-item:not(.carousel-active),
+  .product--carousel media-gallery slider-component .product__media-item.carousel-active {
     opacity: 1 !important;
   }
   
-  .product--carousel media-gallery .slider-buttons {
-    display: flex !important;
-    position: absolute !important;
-    top: 50% !important;
-    left: 0 !important;
-    right: 0 !important;
-    transform: translateY(-50%) !important;
-    justify-content: space-between !important;
-    padding: 0 5px !important;
-    pointer-events: none !important;
-    z-index: 100 !important;
+  /* CRITICAL: Ensure buttons are not positioned absolutely (carousel style) */
+  .product--carousel media-gallery slider-component .slider-buttons {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    z-index: auto !important;
   }
-  
-  .product--carousel media-gallery .slider-button {
-    pointer-events: all !important;
-    display: flex !important;
-    width: 44px !important;
-    height: 44px !important;
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
-    border-radius: 50% !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    transition: all 0.2s ease !important;
-  }
-  
-  .product--carousel media-gallery .slider-button:hover {
-    background: white !important;
-    transform: scale(1.1) !important;
-  }
-  
-  .product--carousel media-gallery .slider-button[disabled] {
-    opacity: 0.3 !important;
-    cursor: not-allowed !important;
-  }
-  
-  .product--carousel media-gallery .slider-button svg {
-    width: 18px !important;
-    height: 18px !important;
-  }
-  
-  .product--carousel media-gallery .slider-counter {
-    position: absolute !important;
-    bottom: -240px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-    padding: 4px 12px !important;
-    border-radius: 15px !important;
-    font-size: 14px !important;
-    z-index: 100 !important;
-  }
-
-
-/* @media screen and (min-width: 750px) {
-  .product--carousel .product__media-wrapper.grid__item {
-    margin-top: -45px !important;
-  }
-}
-
-@media screen and (min-width: 1200px) {
-  .product--carousel .product__media-wrapper.grid__item {
-    margin-top: -75px !important;
-  }
-} */
-
-
-/* MOBILE: Reset any carousel styles below 750px */
-@media screen and (max-width: 749px) {
-.product--carousel media-gallery .product__media-list {
-  display: block !important;
-  flex-direction: column !important;
-  transform: none !important;
-  transition: none !important;
-  position: static !important;
-}
-
-.product--carousel media-gallery .product__media-item {
-  display: block !important;
-  flex: none !important;
-  width: 100% !important;
-  opacity: 1 !important;
-  position: static !important;
-}
-
-.product--carousel media-gallery .product__media-item.hidden {
-  display: block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
 }

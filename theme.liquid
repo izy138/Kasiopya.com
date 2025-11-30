@@ -359,17 +359,50 @@
       <script src="{{ 'predictive-search.js' | asset_url }}" defer="defer"></script>
     {%- endif -%}
 
+{% comment %} UNIFIED CAROUSEL + VARIANT IMAGES FUNCTIONALITY {% endcomment %}
 <script>
 (function() {
   'use strict';
+  
+  // CRITICAL: Set up resize listener FIRST, before any mobile checks
+  // This ensures page reloads when crossing 750px threshold in either direction
+  let wasDesktop = window.innerWidth >= 750;
+  let reloadTimer;
+  window.addEventListener('resize', function() {
+    const isDesktop = window.innerWidth >= 750;
+    if (isDesktop !== wasDesktop) {
+      wasDesktop = isDesktop;
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(function() {
+        // Reload page to ensure clean state on both mobile and desktop
+        console.log(isDesktop ? '🖥️ Switching to desktop - reloading' : '📱 Switching to mobile - reloading');
+        window.location.reload();
+      }, 300);
+    }
+  });
+  
+  // CRITICAL: Exit immediately if mobile - don't load script at all on mobile
+  if (window.innerWidth < 750) {
+    console.log('📱 Mobile detected - carousel script not loaded');
+    return; // Exit immediately, don't do anything
+  }
+  
+  console.log('🔵 UNIFIED CAROUSEL + VARIANT IMAGES SCRIPT LOADED');
   
   let isCarouselActive = false;
   let carouselButtons = [];
   let currentIndex = 0;
   let track = null;
   let gallery = null;
-  let isVariantImagesActive = false;
+  let product = null;
+  let productData = null;
+  let colorImageRanges = {};
   let isTransitioning = false;
+  
+  // CRITICAL: Mobile detection helper - exit immediately if mobile
+  function isMobile() {
+    return window.innerWidth < 750;
+  }
   
   function getCarouselSettings() {
     const width = window.innerWidth;
@@ -385,7 +418,9 @@
   
   function getVisibleSlides() {
     if (!gallery) return [];
-    return Array.from(gallery.querySelectorAll('.product__media-item:not(.hidden)'));
+    const visible = Array.from(gallery.querySelectorAll('.product__media-item:not(.hidden)'));
+    console.log('getVisibleSlides: Found', visible.length, 'visible slides');
+    return visible;
   }
   
   function getAllSlides() {
@@ -393,14 +428,191 @@
     return Array.from(gallery.querySelectorAll('.product__media-item'));
   }
   
-  function repositionVisibleSlides() {
-    // This function physically repositions visible slides to be consecutive
-    // so the carousel doesn't have to animate through hidden slides
-    // EXIT IMMEDIATELY if mobile
-    if (window.innerWidth < 750) {
-      console.log('Mobile view - skipping carousel repositioning');
+  // ============================================
+  // VARIANT IMAGE FUNCTIONS
+  // ============================================
+  
+  function showVariantImages(selectedColor) {
+    // CRITICAL: Exit immediately if mobile - don't modify images on mobile
+    if (isMobile()) {
       return;
     }
+    
+    console.log('🎨 Showing images for color:', selectedColor);
+    
+    const allSlides = getAllSlides();
+    console.log('Total slides:', allSlides.length);
+    
+    let shownCount = 0;
+    let hiddenCount = 0;
+    
+    // Show/hide images based on selected color
+    allSlides.forEach(slide => {
+      const slideColor = slide.getAttribute('data-media-group');
+      if (slideColor === selectedColor) {
+        slide.classList.remove('hidden');
+        shownCount++;
+      } else {
+        slide.classList.add('hidden');
+        hiddenCount++;
+      }
+    });
+    
+    console.log('Variant filtering:', shownCount, 'shown,', hiddenCount, 'hidden');
+  }
+  
+  function setupVariantImageMapping(sectionID) {
+    // CRITICAL: Exit immediately if mobile - don't do variant mapping on mobile
+    if (isMobile()) {
+      return;
+    }
+    
+    const handle = `products/${product.dataset.productHandle || window.location.pathname.split('/').pop()}.js`;
+    
+    fetch(`${window.Shopify.routes.root}${handle}`)
+      .then(response => response.json())
+      .then(productJson => {
+        productData = productJson;
+        
+        const optionsToWatch = "{{ settings.selected_option_name }}".split(",");
+        const colorOption = productData.options.find(option => 
+          optionsToWatch.some(opt => opt.trim() === option.name)
+        );
+        
+        if (!colorOption) {
+          console.log('No color option found');
+          return;
+        }
+        
+        console.log('✅ Color option found:', colorOption.name);
+        
+        const colorValues = colorOption.values;
+        const colorImagePositions = {};
+        
+        // Map colors to their starting image positions
+        colorValues.forEach(color => {
+          const variant = productData.variants.find(v => 
+            v.options[colorOption.position - 1] === color
+          );
+          
+          if (variant && variant.featured_image) {
+            colorImagePositions[color] = variant.featured_image.position;
+          }
+        });
+        
+        // Sort colors by starting image position and create ranges
+        const sortedColors = Object.entries(colorImagePositions).sort((a, b) => a[1] - b[1]);
+        
+        sortedColors.forEach((color, index) => {
+          const colorName = color[0];
+          const startPos = color[1];
+          const endPos = sortedColors[index + 1] ? sortedColors[index + 1][1] : null;
+          colorImageRanges[colorName] = endPos ? [startPos, endPos] : [startPos];
+        });
+        
+        // Apply data-media-group attributes to image slides
+        Object.entries(colorImageRanges).forEach(([color, range]) => {
+          const startPos = range[0];
+          const endPos = range[1] || productData.media.length + 1;
+          
+          const imageIDs = productData.media
+            .filter((media, index) => {
+              const imagePosition = index + 1;
+              return imagePosition >= startPos && imagePosition < endPos;
+            })
+            .map(media => media.id);
+          
+          // Apply data-media-group to slides
+          imageIDs.forEach(mediaID => {
+            const selector = `[data-media-id="${sectionID}-${mediaID}"]`;
+            const mediaItems = gallery.querySelectorAll(`li${selector}`);
+            
+            mediaItems.forEach(item => {
+              item.setAttribute('data-media-group', color);
+            });
+          });
+        });
+        
+        console.log('✅ Variant image mapping complete:', colorImageRanges);
+        
+        // Show initial variant - ONLY on desktop
+        if (!isMobile()) {
+          // Try to get selected color, with a small delay to allow variant select to initialize
+          setTimeout(function() {
+            if (!isMobile() && isCarouselActive) {
+              const initialColor = getSelectedColor();
+              console.log('Initial color selected:', initialColor);
+              console.log('Available color ranges:', Object.keys(colorImageRanges));
+              
+              if (initialColor && colorImageRanges[initialColor]) {
+                console.log('Filtering images for color:', initialColor);
+                showVariantImages(initialColor);
+              } else {
+                // If no color selected or color not found, show all images (fallback)
+                console.log('No color selected, showing all images');
+                const allSlides = getAllSlides();
+                allSlides.forEach(slide => {
+                  slide.classList.remove('hidden');
+                });
+              }
+              
+              // Now that variant images are set, set up carousel
+              const visibleBefore = getVisibleSlides().length;
+              console.log('Visible slides before repositioning:', visibleBefore);
+              
+              repositionVisibleSlides();
+              updateCarousel();
+              setupButtons();
+              
+              const visibleAfter = getVisibleSlides().length;
+              console.log('Visible slides after setup:', visibleAfter);
+            }
+          }, 200);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error loading product data:', error);
+        // On error, still try to set up carousel with all images
+        if (!isMobile() && isCarouselActive) {
+          setTimeout(function() {
+            repositionVisibleSlides();
+            updateCarousel();
+            setupButtons();
+          }, 100);
+        }
+      });
+  }
+  
+  function getSelectedColor() {
+    const variantSelects = document.querySelector('variant-selects');
+    if (!variantSelects) {
+      console.log('No variant-selects found');
+      return null;
+    }
+    
+    const currentValues = Array.from(
+      variantSelects.querySelectorAll('select option[selected], fieldset input:checked')
+    ).map(el => el.value);
+    
+    console.log('Current variant values:', currentValues);
+    console.log('Available color ranges:', Object.keys(colorImageRanges));
+    
+    const selectedColor = currentValues.find(value => colorImageRanges.hasOwnProperty(value));
+    console.log('Selected color:', selectedColor);
+    
+    return selectedColor;
+  }
+  
+  // ============================================
+  // CAROUSEL POSITIONING FUNCTIONS (PRESERVED FROM WORKING VERSION)
+  // ============================================
+  
+  function repositionVisibleSlides() {
+    // CRITICAL: Exit immediately if mobile - don't do anything at all
+    if (isMobile()) {
+      return;
+    }
+    
     const allSlides = getAllSlides();
     const visibleSlides = getVisibleSlides();
     const settings = getCarouselSettings();
@@ -409,9 +621,9 @@
     
     const { slideWidth, gap, padding } = settings;
     
-    console.log('Repositioning', visibleSlides.length, 'visible slides');
+    console.log('📐 Repositioning', visibleSlides.length, 'visible slides');
     
-    // Position each visible slide consecutively
+    // Position each visible slide consecutively using ABSOLUTE positioning
     visibleSlides.forEach((slide, index) => {
       const position = index * (slideWidth + gap);
       slide.style.position = 'absolute';
@@ -439,13 +651,10 @@
   }
   
   function updateCarousel() {
-
-      // EXIT IMMEDIATELY if mobile
-    if (window.innerWidth < 750) {
-      console.log('Mobile view - skipping carousel update');
+    // CRITICAL: Exit immediately if mobile - don't do anything at all
+    if (isMobile()) {
       return;
     }
-  
 
     if (!track || !gallery) {
       console.warn('Track or gallery not found');
@@ -498,89 +707,124 @@
       }
     });
     
-    // Update button states
-    const prevBtn = gallery.querySelector('.slider-button--prev');
-    const nextBtn = gallery.querySelector('.slider-button--next');
+    // Update button states - use carouselButtons if set up
+    const prevBtn = carouselButtons[0] || gallery.querySelector('.slider-button--prev');
+    const nextBtn = carouselButtons[1] || gallery.querySelector('.slider-button--next');
     
     if (prevBtn) {
       prevBtn.disabled = currentIndex === 0;
     }
     if (nextBtn) {
-      nextBtn.disabled = currentIndex === visibleSlides.length - 1;
+      nextBtn.disabled = currentIndex >= visibleSlides.length - 1;
     }
     
-    // Update counter
-    const counterCurrent = gallery.querySelector('.slider-counter--current');
-    const counterTotal = gallery.querySelector('.slider-counter--total');
-    if (counterCurrent) counterCurrent.textContent = currentIndex + 1;
-    if (counterTotal) counterTotal.textContent = visibleSlides.length;
+    // Update counter - only if we have valid values AND we're on desktop
+    // CRITICAL: Never touch counter on mobile - let Shopify's default slider handle it
+    if (!isMobile() && visibleSlides.length > 0) {
+      const counterCurrent = gallery.querySelector('.slider-counter--current');
+      const counterTotal = gallery.querySelector('.slider-counter--total');
+      if (counterCurrent) {
+        counterCurrent.textContent = currentIndex + 1;
+      }
+      if (counterTotal) {
+        counterTotal.textContent = visibleSlides.length;
+      }
+    }
     
     console.log('Counter: ' + (currentIndex + 1) + '/' + visibleSlides.length);
     console.log('======================\n');
   }
   
   function setupButtons() {
+    // CRITICAL: Exit immediately if mobile - don't do anything at all
+    if (isMobile()) {
+      return;
+    }
+    
     if (!gallery) return;
     
+    // Find buttons in media-gallery (desktop carousel buttons)
     const prevBtn = gallery.querySelector('.slider-button--prev');
     const nextBtn = gallery.querySelector('.slider-button--next');
     
+    console.log('setupButtons: Looking for buttons', { prevBtn: !!prevBtn, nextBtn: !!nextBtn });
+    
     if (!prevBtn || !nextBtn) {
+      console.log('setupButtons: Buttons not found, retrying...');
       setTimeout(setupButtons, 100);
       return;
     }
     
-    if (window.innerWidth >= 750) {
-      // Remove old event listeners by cloning
-      const newPrevBtn = prevBtn.cloneNode(true);
-      const newNextBtn = nextBtn.cloneNode(true);
-      prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-      nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-      
-      carouselButtons = [newPrevBtn, newNextBtn];
-      
-      newPrevBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('PREV BUTTON CLICKED');
-        if (currentIndex > 0) {
-          currentIndex--;
-          updateCarousel();
-        }
-      }, { capture: true });
-      
-      newNextBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('NEXT BUTTON CLICKED');
-        const visibleSlides = getVisibleSlides();
-        if (currentIndex < visibleSlides.length - 1) {
-          currentIndex++;
-          updateCarousel();
-        }
-      }, { capture: true });
-      
-      console.log('Buttons set up successfully');
+    // Check if already set up
+    if (carouselButtons.length > 0) {
+      console.log('setupButtons: Buttons already set up');
+      return;
     }
+    
+    console.log('setupButtons: Cloning and setting up buttons');
+    
+    // Clone buttons to remove old event listeners (DESKTOP ONLY)
+    const newPrevBtn = prevBtn.cloneNode(true);
+    const newNextBtn = nextBtn.cloneNode(true);
+    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+    
+    carouselButtons = [newPrevBtn, newNextBtn];
+    
+    newPrevBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('⬅️ PREV CLICKED, currentIndex:', currentIndex);
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateCarousel();
+      }
+    }, { capture: true });
+    
+    newNextBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const visibleSlides = getVisibleSlides();
+      console.log('➡️ NEXT CLICKED, currentIndex:', currentIndex, 'max:', visibleSlides.length - 1);
+      if (currentIndex < visibleSlides.length - 1) {
+        currentIndex++;
+        updateCarousel();
+      }
+    }, { capture: true });
+    
+    // Update button states
+    const visibleSlides = getVisibleSlides();
+    newPrevBtn.disabled = currentIndex === 0;
+    newNextBtn.disabled = currentIndex >= visibleSlides.length - 1;
+    
+    console.log('✅ Buttons set up:', {
+      prevDisabled: newPrevBtn.disabled,
+      nextDisabled: newNextBtn.disabled,
+      currentIndex: currentIndex,
+      visibleSlides: visibleSlides.length
+    });
   }
   
-  function refreshCarousel() {
-
-      // EXIT IMMEDIATELY if mobile
-    if (window.innerWidth < 750) {
-      console.log('Mobile view - skipping carousel refresh');
+  function refreshCarousel(selectedColor) {
+    // CRITICAL: Exit immediately if mobile - don't do anything at all
+    if (isMobile()) {
       return;
     }
   
     if (!isCarouselActive) return;
     
-    console.log('\n🔄 REFRESH CAROUSEL TRIGGERED');
+    console.log('\n🔄 REFRESH CAROUSEL for color:', selectedColor);
     
     // Disable transition during repositioning
     isTransitioning = true;
     
     // Reset to first slide
     currentIndex = 0;
+    
+    // Show correct variant images
+    if (selectedColor) {
+      showVariantImages(selectedColor);
+    }
     
     // Reposition visible slides to be consecutive
     repositionVisibleSlides();
@@ -594,16 +838,19 @@
     }, 50);
   }
   
-  function initProductCarousel() {
-    console.log('🚀 INITIALIZING PRODUCT CAROUSEL');
-    
-    // Exit if mobile (below 750px)
-    if (window.innerWidth < 750) {
-      console.log('Mobile detected - carousel disabled');
+  // ============================================
+  // INITIALIZATION
+  // ============================================
+  
+  function init() {
+    // CRITICAL: Exit if mobile (below 750px) - don't do anything at all
+    if (isMobile()) {
       return;
     }
     
-    const product = document.querySelector('.product--carousel');
+    console.log('🚀 INITIALIZING UNIFIED CAROUSEL + VARIANT IMAGES');
+    
+    product = document.querySelector('.product--carousel');
     if (!product) {
       console.log('No .product--carousel found');
       return;
@@ -623,9 +870,6 @@
       return;
     }
     
-    // Check if variant images functionality is active
-    isVariantImagesActive = allSlides.some(slide => slide.hasAttribute('data-media-group'));
-    console.log('Variant images active:', isVariantImagesActive);
     console.log('Total slides found:', allSlides.length);
     
     isCarouselActive = true;
@@ -637,37 +881,63 @@
       return;
     }
     
-    // Initial setup
-    setTimeout(function() {
-      console.log('Running initial carousel setup');
-      repositionVisibleSlides();
-      updateCarousel();
-      setupButtons();
-    }, 200);
+    const sectionID = product.closest('[data-section]')?.dataset.section || 'main';
     
-    // Listen for custom event from variant images script
-    document.addEventListener('variantImagesUpdated', function(e) {
-      console.log('🎨 Variant Images Updated Event Received:', e.detail);
-      refreshCarousel();
+    // CRITICAL: When switching from mobile to desktop, ensure all images are visible first
+    // Then hide them based on variant selection
+    // Reuse allSlides variable already declared above
+    allSlides.forEach(slide => {
+      slide.classList.remove('hidden');
     });
     
-    // Also listen for regular change events as backup
-    const productSection = document.querySelector('.product-variant-id, variant-selects');
-    if (productSection) {
-      productSection.addEventListener('change', function(e) {
-        console.log('⚙️ Variant change detected (backup listener)');
-        setTimeout(function() {
-          if (getVisibleSlides().length > 0) {
-            refreshCarousel();
+    // Setup variant image mapping FIRST
+    // The carousel setup will happen inside setupVariantImageMapping after mapping completes
+    setupVariantImageMapping(sectionID);
+    
+    // Fallback: If variant mapping takes too long or fails, set up carousel anyway
+    // This ensures carousel works even if variant mapping has issues
+    let fallbackSetup = false;
+    setTimeout(function() {
+      console.log('Fallback: Checking if carousel needs setup');
+      // Make sure we're still on desktop and variant mapping hasn't already set up carousel
+      if (!isMobile() && isCarouselActive && !fallbackSetup) {
+        // Check if buttons are already set up (variant mapping completed)
+        // If carouselButtons is empty, buttons haven't been set up yet
+        if (carouselButtons.length === 0) {
+          // Variant mapping hasn't completed yet or buttons not set up, set up with all images visible
+          console.log('Fallback: Setting up carousel with all images');
+          fallbackSetup = true;
+          const allSlides = getAllSlides();
+          allSlides.forEach(slide => {
+            slide.classList.remove('hidden');
+          });
+          repositionVisibleSlides();
+          updateCarousel();
+          setupButtons();
+        } else {
+          console.log('Carousel already set up by variant mapping');
+        }
+      }
+    }, 1500); // Longer timeout as fallback (after variant mapping's 200ms delay + fetch time)
+    
+    // Listen for variant changes - ONLY on desktop
+    if (!isMobile()) {
+      const productSection = document.querySelector('.product-variant-id, variant-selects');
+      if (productSection) {
+        productSection.addEventListener('change', function(e) {
+          console.log('⚙️ Variant changed');
+          const selectedColor = getSelectedColor();
+          if (selectedColor) {
+            refreshCarousel(selectedColor);
           }
-        }, 300);
-      });
+        });
+      }
     }
     
     // Update carousel on resize within desktop range
     let resizeTimer;
     window.addEventListener('resize', function() {
-      if (window.innerWidth >= 750 && isCarouselActive) {
+      if (!isMobile() && isCarouselActive) {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
           console.log('📏 Window resized, updating carousel');
@@ -677,35 +947,22 @@
       }
     });
     
-    console.log('✅ Carousel initialization complete\n');
+    console.log('✅ Initialization complete\n');
   }
   
-  // Only run on desktop initially
-  if (window.innerWidth >= 750) {
+  // Only run on desktop
+  if (!isMobile()) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(initProductCarousel, 400);
+        setTimeout(init, 200);
       });
     } else {
-      setTimeout(initProductCarousel, 400);
+      setTimeout(init, 200);
     }
   }
   
-  // Reload page when crossing 750px threshold
-  let wasDesktop = window.innerWidth >= 750;
-  let reloadTimer;
-  
-  window.addEventListener('resize', function() {
-    const isDesktop = window.innerWidth >= 750;
-    
-    if (isDesktop !== wasDesktop) {
-      wasDesktop = isDesktop;
-      clearTimeout(reloadTimer);
-      reloadTimer = setTimeout(function() {
-        window.location.reload();
-      }, 300);
-    }
-  });
+  // Note: Resize listener for page reload is set up at the very top of the script
+  // before the mobile check, so it works even when starting on mobile
 })();
 </script>
   </body>
