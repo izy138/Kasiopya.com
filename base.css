@@ -1,6 +1,4 @@
 
-
-
   /* ============================================
      VIDEO CONTAINER - RESPONSIVE BREAKPOINTS
      ============================================ */
@@ -107,9 +105,12 @@
       margin-left: 50px !important;
     }
   
+    .product--carousel media-gallery .slider-counter {
+      bottom: -240px !important;
+    }
     
     .product--carousel .product__media-wrapper.grid__item {
-      margin-top: -75px !important;
+      margin-top: -70px !important;
     }
     
     
@@ -149,6 +150,13 @@
       margin-left: 30px !important;
     }
     
+    .product--carousel media-gallery .slider-counter {
+      bottom: -200px !important;
+    }
+
+    .product--carousel .product__media-wrapper.grid__item {
+      margin-top: -60px !important;
+    }
     .product--carousel .product__media-wrapper,
     .product--carousel media-gallery {
       max-width: 500px !important;
@@ -158,9 +166,6 @@
       padding: 30px 50px !important;
     }
 
-    .product--carousel media-gallery .slider-counter {
-      bottom: -280px !important;
-    }
     
     .product--carousel .product__media-item {
       flex: 0 0 400px !important;
@@ -187,6 +192,14 @@
       gap: 1.5rem !important;
       align-items: start !important;
       margin-left: 15px !important;
+    }
+
+    .product--carousel media-gallery .slider-counter {
+      bottom: -160px !important;
+    }
+
+    .product--carousel .product__media-wrapper.grid__item {
+      margin-top: -50px !important;
     }
     
     .product--carousel .product__media-wrapper {
@@ -314,14 +327,14 @@
       height: 18px !important;
     }
     
+    /* Base slider-counter styles - applies to all desktop breakpoints */
     .product--carousel media-gallery .slider-counter {
       position: absolute !important;
-      bottom: -280px !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
-      background: rgba(255, 255, 255, 0.9) !important;
-      padding: 6px 12px !important;
-      border-radius: 15px !important;
+      background: rgba(255, 255, 255, 0.62) !important;
+      padding: 2px 2px !important;
+      border-radius: 8px !important;
       font-size: 14px !important;
       z-index: 100 !important;
     }
