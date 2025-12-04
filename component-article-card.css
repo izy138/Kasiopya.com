@@ -1,0 +1,14 @@
+.article-card .card__heading {
+    margin-bottom: 0.6rem; /*11/25*/
+  }
+  
+  .blog-articles .article-card .card__information,
+  .blog__posts .article-card .card__information {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  
+  .article-card__info {
+    padding-top: 0.4rem; /*0.3*/ /* padding-bottom 0.5*/
+  }
+  

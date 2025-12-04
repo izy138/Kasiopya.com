@@ -1268,6 +1268,41 @@
   // Note: Resize listener for page reload is set up at the very top of the script
   // before the mobile check, so it works even when starting on mobile
 })();
+
+// ============================================
+  // COLOR NAME DISPLAY UPDATE
+  // ============================================
+  
+  function setupColorNameDisplay() {
+    // Find all color option inputs
+    const colorInputs = document.querySelectorAll('input[type="radio"][data-option-name="Color"]');
+    
+    colorInputs.forEach(function(input) {
+      input.addEventListener('change', function() {
+        const sectionId = this.getAttribute('data-section-id');
+        const colorName = this.value;
+        const displayElement = document.getElementById('selected-color-name-' + sectionId);
+        
+        if (displayElement) {
+          // Fade out
+          displayElement.style.opacity = '0';
+          
+        // Update text and fade in
+          setTimeout(function() {
+            displayElement.textContent = ': ' + colorName; 
+            displayElement.style.opacity = '1';
+          }, 150);
+        }
+      });
+    });
+  }
+  
+  // Run color name display setup on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupColorNameDisplay);
+  } else {
+    setupColorNameDisplay();
+  }
 </script>
   </body>
 </html>

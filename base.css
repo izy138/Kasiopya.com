@@ -1,5 +1,75 @@
 
+.grid__item {
+  width: calc(25% - var(--grid-mobile-horizontal-spacing) * 3 / 4);
+  max-width: calc(50% - var(--grid-mobile-horizontal-spacing) / 2);
+  flex-grow: 1;
+  flex-shrink: 0; 
+  /* margin-bottom: 10px; MOVE PICTURE AND PRODUCT INFO UP 11/25 */
+  margin-top: -10px;
 
+}
+.header {
+  display: grid;
+  grid-template-areas: 'left-icons heading icons';
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  max-height: 10rem;  /* header HEIGHT 11/25*/
+
+}
+.header__heading-link {
+  display: inline-block;
+  padding: 0.75rem;
+  margin-top: -2.5rem; /* TITLE/all header 11/25*/
+  text-decoration: none;
+  word-break: break-word;
+  
+}
+/* Header icons */
+.header__icons {
+  display: flex;
+  grid-area: icons;
+  justify-self: end;
+  padding-right: 0.8rem;
+  margin-bottom: 2rem; /*ICONS 11/25 */
+
+}
+
+@media screen and (min-width: 990px) {
+  .header__inline-menu {
+    display: block;
+    margin-bottom: 1.75rem; /* MENU 11/25*/
+  }
+
+  .header--top-center .header__inline-menu {
+    justify-self: center;
+  }
+
+  .header--top-center .header__inline-menu > .list-menu--inline {
+    justify-content: center;
+  }
+
+  .header--middle-left .header__inline-menu {
+    margin-left: 0;
+  }
+}
+@media screen and (min-width: 990px) {
+  .header__inline-menu {
+    display: block;
+    margin-bottom: 1.75rem; /* MENU 11/25*/
+  }
+
+  .header--top-center .header__inline-menu {
+    justify-self: center;
+  }
+
+  .header--top-center .header__inline-menu > .list-menu--inline {
+    justify-content: center;
+  }
+
+  .header--middle-left .header__inline-menu {
+    margin-left: 0;
+  }
+}
   /* ============================================
      VIDEO CONTAINER - RESPONSIVE BREAKPOINTS
      ============================================ */
@@ -420,4 +490,67 @@
     transform: none !important;
     z-index: auto !important;
   }
+}
+
+/* Custom Color Swatch Styles */
+.product-form__input input[type="radio"] + label[style*="background-image"],
+.product-form__input input[type="radio"] + label[style*="background-color"] {
+  display: inline-block;
+  cursor: pointer;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Hover effect */
+.product-form__input input[type="radio"] + label[style*="background-image"]:hover,
+.product-form__input input[type="radio"] + label[style*="background-color"]:hover {
+  transform: scale(1.05);
+  border-color: rgba(0, 0, 0, 0.63);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+
+/* Selected state - border */
+/* .product-form__input input[type="radio"]:checked + label[style*="background-image"],
+.product-form__input input[type="radio"]:checked + label[style*="background-color"] {
+  border-color: rgb(var(--color-foreground));
+  border-width: 1px;
+  box-shadow: 0 0 0 1px rgb(var(--color-background)), 0 0 0 1px rgb(var(--color-foreground));
+} */
+
+/* Disabled state */
+.product-form__input input[type="radio"].disabled + label[style*="background-image"],
+.product-form__input input[type="radio"].disabled + label[style*="background-color"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.product-form__input input[type="radio"].disabled + label[style*="background-image"]:hover,
+.product-form__input input[type="radio"].disabled + label[style*="background-color"]:hover {
+  transform: none;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+}
+/* Color name display */
+.product-form__input--color-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(var(--color-foreground), 0.75);
+  margin-left: 8px;
+  display: flex;
+  transition: opacity 0.2s ease;
+  margin-left: 35px;
+  margin-top: -23px;
+}
+
+.product-form__input--color-name:empty {
+  display: none;
+}
+
+/* Only apply negative margin to product page grid items */
+.product--carousel .grid__item,
+.product--columns .grid__item,
+.product .grid__item {
+  margin-top: -20px; /* MOVE PICTURE AND PRODUCT INFO UP 11/25 */
 }
