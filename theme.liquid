@@ -387,7 +387,7 @@
   if (isMobileDevice) {
     console.log('📱 Mobile detected - variant filtering only (no carousel)');
   } else {
-  console.log('🔵 UNIFIED CAROUSEL + VARIANT IMAGES SCRIPT LOADED');
+    console.log('🔵 UNIFIED CAROUSEL + VARIANT IMAGES SCRIPT LOADED');
   }
   
   let isCarouselActive = false;
@@ -601,37 +601,37 @@
         // Show initial variant - works on both mobile and desktop
         // Use requestAnimationFrame for immediate update
         requestAnimationFrame(function() {
-              const initialColor = getSelectedColor();
-              console.log('Initial color selected:', initialColor);
-              console.log('Available color ranges:', Object.keys(colorImageRanges));
-              
-              if (initialColor && colorImageRanges[initialColor]) {
-                console.log('Filtering images for color:', initialColor);
-                showVariantImages(initialColor);
-              } else {
-                // If no color selected or color not found, show all images (fallback)
-                console.log('No color selected, showing all images');
-                const allSlides = getAllSlides();
-                allSlides.forEach(slide => {
-                  slide.classList.remove('hidden');
-                });
+          const initialColor = getSelectedColor();
+          console.log('Initial color selected:', initialColor);
+          console.log('Available color ranges:', Object.keys(colorImageRanges));
+          
+          if (initialColor && colorImageRanges[initialColor]) {
+            console.log('Filtering images for color:', initialColor);
+            showVariantImages(initialColor);
+          } else {
+            // If no color selected or color not found, show all images (fallback)
+            console.log('No color selected, showing all images');
+            const allSlides = getAllSlides();
+            allSlides.forEach(slide => {
+              slide.classList.remove('hidden');
+            });
             if (isMobile()) {
               updateMobileSliderCounter();
             }
-              }
-              
+          }
+          
           // Desktop: Set up carousel after variant images are set
           if (!isMobile() && isCarouselActive) {
-              const visibleBefore = getVisibleSlides().length;
-              console.log('Visible slides before repositioning:', visibleBefore);
-              
-              repositionVisibleSlides();
-              updateCarousel();
-              setupButtons();
-              
-              const visibleAfter = getVisibleSlides().length;
-              console.log('Visible slides after setup:', visibleAfter);
-            }
+            const visibleBefore = getVisibleSlides().length;
+            console.log('Visible slides before repositioning:', visibleBefore);
+            
+            repositionVisibleSlides();
+            updateCarousel();
+            setupButtons();
+            
+            const visibleAfter = getVisibleSlides().length;
+            console.log('Visible slides after setup:', visibleAfter);
+          }
         });
       })
       .catch(error => {
@@ -787,7 +787,7 @@
     }
     
     // Update counter - only if we have valid values AND we're on desktop
-    // CRITICAL: Never touch counter on mobile - let Shopify's default slider handle it
+    // CRITICAL: Never touch counter on mobile - let our custom arrows handle it
     if (!isMobile() && visibleSlides.length > 0) {
       const counterCurrent = gallery.querySelector('.slider-counter--current');
       const counterTotal = gallery.querySelector('.slider-counter--total');
@@ -889,54 +889,29 @@
       // Disable transition during repositioning
       isTransitioning = true;
     
-    // Reposition visible slides to be consecutive
-    repositionVisibleSlides();
+      // Reposition visible slides to be consecutive
+      repositionVisibleSlides();
     
-    // Small delay to ensure DOM is updated
-    setTimeout(function() {
-      isTransitioning = false;
-      updateCarousel();
-      // Re-setup buttons to ensure they work
-      setupButtons();
-    }, 50);
+      // Small delay to ensure DOM is updated
+      setTimeout(function() {
+        isTransitioning = false;
+        updateCarousel();
+        // Re-setup buttons to ensure they work
+        setupButtons();
+      }, 50);
     }
     
-    // Mobile: Just update counter and reset slider position
+    // Mobile: Reset custom carousel
     if (isMobile()) {
       const visibleSlides = getVisibleSlides();
+      console.log('📱 Mobile refresh - visible slides:', visibleSlides.length);
+      
       if (visibleSlides.length > 0) {
-        // Remove active class from all slides
-        const allSlides = getAllSlides();
-        allSlides.forEach(slide => {
-          slide.classList.remove('is-active', 'slider__slide--active');
-          slide.removeAttribute('aria-current');
-        });
-        
-        // Set first visible slide as active
-        const firstVisible = visibleSlides[0];
-        firstVisible.classList.add('is-active');
-        firstVisible.setAttribute('aria-current', 'true');
-        currentIndex = 0;
-        
-        // Try to trigger slider to go to first visible slide
-        const sliderComponent = gallery?.querySelector('slider-component');
-        if (sliderComponent && firstVisible) {
-          // Find the index of first visible slide in all slides (including hidden)
-          const allSlidesArray = Array.from(gallery.querySelectorAll('.product__media-item'));
-          const slideIndex = allSlidesArray.indexOf(firstVisible);
-          if (slideIndex >= 0) {
-            // Use slider's internal method if available
-            if (sliderComponent.goToSlide) {
-              sliderComponent.goToSlide(slideIndex);
-            } else {
-              // Fallback: scroll into view
-              firstVisible.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-          }
+        // Call our custom reset function
+        if (window.resetMobileCarousel) {
+          window.resetMobileCarousel();
         }
       }
-      // Update counter after resetting position
-      updateMobileSliderCounter();
     }
   }
   
@@ -974,21 +949,9 @@
     if (!mobile) {
       isCarouselActive = true;
     }
-      currentIndex = 0;
+    currentIndex = 0;
       
     const sectionID = product.closest('[data-section]')?.dataset.section || 'main';
-    
-    // On mobile, immediately override counter to prevent showing wrong count
-    if (mobile) {
-      const counterTotal = gallery.querySelector('.slider-counter--total');
-      const counterCurrent = gallery.querySelector('.slider-counter--current');
-      if (counterTotal) {
-        counterTotal.textContent = '...';
-      }
-      if (counterCurrent) {
-        counterCurrent.textContent = '1';
-      }
-    }
     
     // Ensure all images are visible first, then hide them based on variant selection
     allSlides.forEach(slide => {
@@ -1034,204 +997,9 @@
         console.log('⚙️ Variant changed');
         const selectedColor = getSelectedColor();
         if (selectedColor) {
-            refreshCarousel(selectedColor);
-          }
+          refreshCarousel(selectedColor);
+        }
       });
-    }
-    
-    // Mobile: Track and override slider counter (simplified approach)
-    if (isMobile() && gallery) {
-      const sliderComponent = gallery.querySelector('slider-component');
-      const mediaList = gallery.querySelector('.product__media-list');
-      const counterTotal = gallery.querySelector('.slider-counter--total');
-      const counterCurrent = gallery.querySelector('.slider-counter--current');
-      
-      if (sliderComponent && mediaList && counterTotal) {
-        let isOurUpdate = false; // Flag to prevent infinite loops
-        
-        // Function to update counter based on visible slides
-        const updateCounter = function() {
-          if (isOurUpdate) return; // Don't update if we're in the middle of our own update
-          
-          const visibleSlides = getVisibleSlides();
-          if (visibleSlides.length === 0) return;
-          
-          // Get Shopify's current counter value (which counts ALL slides)
-          let shopifyCurrentSlide = 1;
-          if (counterCurrent) {
-            shopifyCurrentSlide = parseInt(counterCurrent.textContent) || 1;
-          }
-          
-          // Convert Shopify's slide number (all slides) to visible slide index
-          // Count visible slides up to Shopify's current position
-          const allSlides = Array.from(mediaList.querySelectorAll('.product__media-item'));
-          let visibleCount = 0;
-          let foundIndex = 0;
-          
-          for (let i = 0; i < allSlides.length; i++) {
-            if (!allSlides[i].classList.contains('hidden')) {
-              visibleCount++;
-              // If we've reached Shopify's current slide position, this is our index
-              if (visibleCount === shopifyCurrentSlide) {
-                foundIndex = visibleCount - 1; // Convert to 0-based index
-                break;
-              }
-            }
-          }
-          
-          // If we didn't find it (Shopify's counter might be ahead), use the last visible
-          if (foundIndex === 0 && visibleCount < shopifyCurrentSlide) {
-            foundIndex = visibleSlides.length - 1;
-          }
-          
-          // Ensure index is within bounds
-          if (foundIndex >= visibleSlides.length) {
-            foundIndex = visibleSlides.length - 1;
-          }
-          if (foundIndex < 0) {
-            foundIndex = 0;
-          }
-          
-          currentIndex = foundIndex;
-          
-          // Override Shopify's counter immediately
-          const correctTotal = visibleSlides.length;
-          const correctCurrent = currentIndex + 1;
-          
-          // Check if counter needs updating
-          const currentTotalValue = counterTotal ? parseInt(counterTotal.textContent) : 0;
-          const currentCurrentValue = counterCurrent ? parseInt(counterCurrent.textContent) : 0;
-          
-          // Only update if values are wrong
-          if (currentTotalValue !== correctTotal || currentCurrentValue !== correctCurrent) {
-            isOurUpdate = true; // Set flag before updating
-            
-            // Update counter
-            if (counterTotal) {
-              counterTotal.textContent = correctTotal;
-            }
-            if (counterCurrent) {
-              counterCurrent.textContent = correctCurrent;
-            }
-            
-            // Reset flag after a brief moment
-            setTimeout(function() {
-              isOurUpdate = false;
-            }, 10);
-            
-            console.log('📱 Counter corrected:', correctCurrent + '/' + correctTotal, 
-                       'Shopify had:', shopifyCurrentSlide, 
-                       'Visible index:', currentIndex);
-          }
-        };
-        
-        // Use MutationObserver to watch for slide changes only
-        const slideObserver = new MutationObserver(function(mutations) {
-          let shouldUpdate = false;
-          mutations.forEach(function(mutation) {
-            // Only update on slide class changes
-            if (mutation.type === 'attributes' && 
-                (mutation.attributeName === 'class' || mutation.attributeName === 'aria-current') &&
-                mutation.target.classList.contains('product__media-item')) {
-              shouldUpdate = true;
-            }
-          });
-          if (shouldUpdate) {
-            // Small delay to let Shopify finish its update first
-            setTimeout(updateCounter, 50);
-          }
-        });
-        
-        // Observe the media list for slide changes
-        slideObserver.observe(mediaList, {
-          attributes: true,
-          attributeFilter: ['class', 'aria-current'],
-          subtree: true,
-          childList: false
-        });
-        
-        // Listen for click events on slider buttons
-        const prevBtn = gallery.querySelector('.slider-button--prev');
-        const nextBtn = gallery.querySelector('.slider-button--next');
-        
-        const handleButtonClick = function() {
-          // Update after a short delay to let slide change first
-          setTimeout(updateCounter, 100);
-          setTimeout(updateCounter, 200);
-        };
-        
-        if (prevBtn) {
-          prevBtn.addEventListener('click', handleButtonClick, true);
-        }
-        
-        if (nextBtn) {
-          nextBtn.addEventListener('click', handleButtonClick, true);
-        }
-        
-        // Listen for touch/swipe events
-        let touchStartX = 0;
-        mediaList.addEventListener('touchstart', function(e) {
-          touchStartX = e.touches[0].clientX;
-        }, { passive: true });
-        
-        mediaList.addEventListener('touchend', function(e) {
-          const touchEndX = e.changedTouches[0].clientX;
-          const diff = touchStartX - touchEndX;
-          if (Math.abs(diff) > 50) { // Swipe detected
-            setTimeout(updateCounter, 150);
-          }
-        }, { passive: true });
-        
-        // Watch counter elements for Shopify's updates and immediately correct them
-        const counterObserver = new MutationObserver(function(mutations) {
-          if (isOurUpdate) return; // Ignore our own updates
-          
-          let counterChanged = false;
-          mutations.forEach(function(mutation) {
-            if (mutation.type === 'characterData' || mutation.type === 'childList') {
-              const target = mutation.target;
-              if (target === counterTotal || target === counterCurrent ||
-                  (counterTotal && counterTotal.contains(target)) ||
-                  (counterCurrent && counterCurrent.contains(target)) ||
-                  (target.nodeType === 3 && target.parentElement &&
-                   (target.parentElement === counterTotal || target.parentElement === counterCurrent))) {
-                counterChanged = true;
-              }
-            }
-          });
-          
-          if (counterChanged) {
-            // Shopify updated the counter, correct it immediately
-            requestAnimationFrame(updateCounter);
-          }
-        });
-        
-        // Observe counter elements
-        if (counterTotal) {
-          counterObserver.observe(counterTotal, {
-            childList: true,
-            characterData: true,
-            subtree: true
-          });
-        }
-        if (counterCurrent) {
-          counterObserver.observe(counterCurrent, {
-            childList: true,
-            characterData: true,
-            subtree: true
-          });
-        }
-        
-        // Light polling as backup to catch any missed updates
-        let lastCounterValue = null;
-        setInterval(function() {
-          const currentCounterValue = counterTotal ? counterTotal.textContent + '/' + (counterCurrent ? counterCurrent.textContent : '') : null;
-          if (currentCounterValue !== lastCounterValue) {
-            lastCounterValue = currentCounterValue;
-            updateCounter();
-          }
-        }, 200);
-      }
     }
     
     // Update carousel on resize within desktop range (desktop only)
@@ -1244,16 +1012,176 @@
           repositionVisibleSlides();
           updateCarousel();
         }, 100);
-      } else if (isMobile()) {
-        // On mobile, just update counter on resize
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
-          updateMobileSliderCounter();
-        }, 100);
       }
     });
     
     console.log('✅ Initialization complete\n');
+  }
+  
+  // ============================================
+  // MOBILE CUSTOM ARROWS - INDEPENDENT OF SHOPIFY
+  // ============================================
+  function setupMobileCustomArrows() {
+    if (!isMobile() || !gallery) return;
+    
+    console.log('📱 Setting up custom mobile arrows');
+    
+    const mediaList = gallery.querySelector('.product__media-list');
+    if (!mediaList) return;
+    
+    // Remove any existing custom arrows
+    const existingArrows = gallery.querySelector('.custom-mobile-arrows');
+    if (existingArrows) {
+      existingArrows.remove();
+    }
+    
+    // Create arrow container
+    const arrowContainer = document.createElement('div');
+    arrowContainer.className = 'custom-mobile-arrows';
+    
+    // Create prev button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'custom-arrow-btn custom-arrow-prev';
+    prevBtn.innerHTML = `<svg aria-hidden="true" focusable="false" role="presentation" class="icon icon-caret" viewBox="0 0 10 6">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M9.354.646a.5.5 0 00-.708 0L5 4.293 1.354.646a.5.5 0 00-.708.708l4 4a.5.5 0 00.708 0l4-4a.5.5 0 000-.708z" fill="currentColor"></path>
+    </svg>`;
+    prevBtn.style.transform = 'rotate(90deg)';
+    
+    // Create next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'custom-arrow-btn custom-arrow-next';
+    nextBtn.innerHTML = `<svg aria-hidden="true" focusable="false" role="presentation" class="icon icon-caret" viewBox="0 0 10 6">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M9.354.646a.5.5 0 00-.708 0L5 4.293 1.354.646a.5.5 0 00-.708.708l4 4a.5.5 0 00.708 0l4-4a.5.5 0 000-.708z" fill="currentColor"></path>
+    </svg>`;
+    nextBtn.style.transform = 'rotate(-90deg)';
+    
+    // Add buttons to container
+    arrowContainer.appendChild(prevBtn);
+    arrowContainer.appendChild(nextBtn);
+    
+    // Add container to gallery
+    gallery.appendChild(arrowContainer);
+    
+    // Track current slide
+    let mobileCurrentIndex = 0;
+    
+    // Get visible slides
+    const getMobileVisibleSlides = function() {
+      return Array.from(gallery.querySelectorAll('.product__media-item:not(.hidden)'));
+    };
+    
+    // Smooth scroll to slide
+    const scrollToSlide = function(index) {
+      const visibleSlides = getMobileVisibleSlides();
+      if (index < 0 || index >= visibleSlides.length) return;
+      
+      const targetSlide = visibleSlides[index];
+      if (!targetSlide) return;
+      
+      // Smooth scroll to slide
+      targetSlide.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'nearest', 
+        inline: 'start' 
+      });
+      
+      mobileCurrentIndex = index;
+      updateMobileArrows();
+      updateMobileCounter();
+    };
+    
+    // Update arrow states
+    const updateMobileArrows = function() {
+      const visibleSlides = getMobileVisibleSlides();
+      
+      prevBtn.disabled = mobileCurrentIndex === 0;
+      nextBtn.disabled = mobileCurrentIndex >= visibleSlides.length - 1;
+      
+      console.log('🔘 Mobile arrows:', {
+        current: mobileCurrentIndex + 1,
+        total: visibleSlides.length,
+        prevDisabled: prevBtn.disabled,
+        nextDisabled: nextBtn.disabled
+      });
+    };
+    
+    // Update counter
+    const updateMobileCounter = function() {
+      const visibleSlides = getMobileVisibleSlides();
+      const counterCurrent = gallery.querySelector('.slider-counter--current');
+      const counterTotal = gallery.querySelector('.slider-counter--total');
+      
+      if (counterCurrent && counterTotal) {
+        counterCurrent.textContent = mobileCurrentIndex + 1;
+        counterTotal.textContent = visibleSlides.length;
+        console.log('📱 Counter:', (mobileCurrentIndex + 1) + '/' + visibleSlides.length);
+      }
+    };
+    
+    // Prev button click
+    prevBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (mobileCurrentIndex > 0) {
+        scrollToSlide(mobileCurrentIndex - 1);
+      }
+    });
+    
+    // Next button click
+    nextBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const visibleSlides = getMobileVisibleSlides();
+      if (mobileCurrentIndex < visibleSlides.length - 1) {
+        scrollToSlide(mobileCurrentIndex + 1);
+      }
+    });
+    
+    // Track scroll position to update counter
+    let scrollTimeout;
+    mediaList.addEventListener('scroll', function() {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(function() {
+        const scrollLeft = mediaList.scrollLeft;
+        const containerWidth = mediaList.offsetWidth;
+        const calculatedIndex = Math.round(scrollLeft / containerWidth);
+        const visibleSlides = getMobileVisibleSlides();
+        
+        mobileCurrentIndex = Math.max(0, Math.min(calculatedIndex, visibleSlides.length - 1));
+        updateMobileArrows();
+        updateMobileCounter();
+      }, 150);
+    }, { passive: true });
+    
+    // Reset to first slide (called by refreshCarousel)
+    window.resetMobileCarousel = function() {
+      console.log('🔄 Resetting mobile carousel to first slide');
+      mobileCurrentIndex = 0;
+      
+      // Scroll to first visible slide immediately
+      const visibleSlides = getMobileVisibleSlides();
+      if (visibleSlides.length > 0) {
+        visibleSlides[0].scrollIntoView({ 
+          behavior: 'auto', 
+          block: 'nearest', 
+          inline: 'start' 
+        });
+      }
+      
+      updateMobileArrows();
+      updateMobileCounter();
+    };
+    
+    // Initial setup
+    updateMobileArrows();
+    updateMobileCounter();
+    
+    console.log('✅ Mobile custom arrows ready');
+  }
+  
+  // Call setup after init completes
+  if (isMobile()) {
+    setTimeout(setupMobileCustomArrows, 300);
   }
   
   // Run on both mobile and desktop (variant filtering works on both)
