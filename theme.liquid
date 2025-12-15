@@ -1016,18 +1016,36 @@
     });
     
     console.log('✅ Initialization complete\n');
+    
+    // Set up mobile arrows after init completes (gallery is now set)
+    if (isMobile() && gallery) {
+      // Use a small delay to ensure DOM is fully ready
+      setTimeout(setupMobileCustomArrows, 100);
+    }
   }
   
   // ============================================
   // MOBILE CUSTOM ARROWS - INDEPENDENT OF SHOPIFY
   // ============================================
   function setupMobileCustomArrows() {
-    if (!isMobile() || !gallery) return;
+    if (!isMobile() || !gallery) {
+      // Retry if gallery not ready yet (shouldn't happen, but safety check)
+      if (!gallery && isMobile()) {
+        console.log('📱 Gallery not ready, retrying mobile arrows setup...');
+        setTimeout(setupMobileCustomArrows, 200);
+      }
+      return;
+    }
     
     console.log('📱 Setting up custom mobile arrows');
     
     const mediaList = gallery.querySelector('.product__media-list');
-    if (!mediaList) return;
+    if (!mediaList) {
+      // Retry if mediaList not found yet
+      console.log('📱 Media list not ready, retrying mobile arrows setup...');
+      setTimeout(setupMobileCustomArrows, 200);
+      return;
+    }
     
     // Remove any existing custom arrows
     const existingArrows = gallery.querySelector('.custom-mobile-arrows');
@@ -1177,11 +1195,6 @@
     updateMobileCounter();
     
     console.log('✅ Mobile custom arrows ready');
-  }
-  
-  // Call setup after init completes
-  if (isMobile()) {
-    setTimeout(setupMobileCustomArrows, 300);
   }
   
   // Run on both mobile and desktop (variant filtering works on both)
