@@ -685,3 +685,38 @@
     height: 18px;
   }
 }
+/* ============================================
+   MODAL FIX - Full Width Zoom with Vertical Scroll
+   ============================================ */
+   @media screen and (min-width: 750px) {
+    /* Target modal content specifically */
+    .product-media-modal__content {
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    
+    /* Hide ALL images in modal by default */
+    .product-media-modal__content img,
+    .product-media-modal__content .global-media-settings {
+      display: none !important;
+    }
+    
+    /* Only show the FIRST/ACTIVE image at FULL WIDTH */
+    .product-media-modal__content img.active,
+    .product-media-modal__content img.product__media-item--variant.active,
+    .product-media-modal__content .global-media-settings:first-child,
+    .product-media-modal__content .global-media-settings:first-child img,
+    .product-media-modal__content img:first-of-type {
+      display: block !important;
+      position: static !important;
+      width: 100% !important;
+      height: auto !important;
+      max-width: 100% !important;
+      max-height: none !important;
+      object-fit: contain !important;
+      margin: 0 !important;
+    }
+  }
