@@ -34,6 +34,7 @@
 
 }
 
+
 @media screen and (min-width: 990px) {
   .header__inline-menu {
     display: block;
@@ -70,6 +71,46 @@
     margin-left: 0;
   }
 }
+
+/* Tablet range (990px - 1112px) - Adjust title, icons, and menu */
+@media screen and (min-width: 990px) and (max-width: 1112px) {
+  /* TITLE */
+  .header__heading-link {
+    margin-top: -4rem; /* Adjust this value */
+  }
+  
+  /* ICONS */
+  .header__icons {
+    margin-bottom: 4rem; /* Adjust this value */
+  }
+  
+  /* MENU */
+  .header__inline-menu {
+    margin-top: -0.8rem; !im /* Adjust this value */
+  }
+}
+
+/* Mobile/Tablet (989px and below) - Adjust title and icons */
+@media screen and (max-width: 989px) {
+  /* TITLE */
+  .header__heading-link {
+    margin-top: -1.25rem; /* Adjust this value */
+  }
+  
+  /* ICONS */
+  .header__icons {
+    margin-bottom: 0.65rem; /* Adjust this value */
+  }
+  
+  /* HAMBURGER MENU ICON (left side) */
+  .header__icon--menu,
+  header-drawer,
+  .header__icon--summary {
+    margin-bottom: 0.45rem; /* Adjust this value to move hamburger up/down */
+  }
+}
+
+
   /* ============================================
      VIDEO CONTAINER - RESPONSIVE BREAKPOINTS
      ============================================ */
@@ -643,7 +684,7 @@
   /* Our custom arrow container */
   .product--carousel media-gallery .custom-mobile-arrows {
     position: absolute;
-    top: 47%;
+    top: 50%;
     left: 0;
     right: 0;
     transform: translateY(-50%);
