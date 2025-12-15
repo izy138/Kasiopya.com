@@ -86,7 +86,7 @@
   
   /* MENU */
   .header__inline-menu {
-    margin-top: -0.8rem; !im /* Adjust this value */
+    margin-top: -0.8rem;  /* Adjust this value */
   }
 }
 
