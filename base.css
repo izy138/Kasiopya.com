@@ -35,6 +35,10 @@
 }
 
 
+/* ============================================
+   MOBILE NAV BAR AFJUSTMENTS 
+   ============================================ */
+
 @media screen and (min-width: 990px) {
   .header__inline-menu {
     display: block;
@@ -53,6 +57,7 @@
     margin-left: 0;
   }
 }
+
 @media screen and (min-width: 990px) {
   .header__inline-menu {
     display: block;
@@ -726,6 +731,7 @@
     height: 18px;
   }
 }
+
 /* ============================================
    MODAL FIX - Full Width Zoom with Vertical Scroll
    ============================================ */
@@ -745,12 +751,11 @@
       display: none !important;
     }
     
-    /* Only show the FIRST/ACTIVE image at FULL WIDTH */
+    /* ONLY show the ACTIVE image - NOT the first one */
     .product-media-modal__content img.active,
     .product-media-modal__content img.product__media-item--variant.active,
-    .product-media-modal__content .global-media-settings:first-child,
-    .product-media-modal__content .global-media-settings:first-child img,
-    .product-media-modal__content img:first-of-type {
+    .product-media-modal__content .global-media-settings.active,
+    .product-media-modal__content .global-media-settings.active img {
       display: block !important;
       position: static !important;
       width: 100% !important;
@@ -758,6 +763,21 @@
       max-width: 100% !important;
       max-height: none !important;
       object-fit: contain !important;
-      margin: 0 !important;
+      margin: 0 auto !important;
+    }
+    
+    /* Fallback: If no active class, show ONLY first child */
+    .product-media-modal__content:not(:has(.active)) img:first-of-type,
+    .product-media-modal__content:not(:has(.active)) .global-media-settings:first-child,
+    .product-media-modal__content:not(:has(.active)) .global-media-settings:first-child img {
+      display: block !important;
+      position: static !important;
+      width: 100% !important;
+      height: auto !important;
+      max-width: 100% !important;
+      max-height: none !important;
+      object-fit: contain !important;
+      margin: 0 auto !important;
     }
   }
+  
